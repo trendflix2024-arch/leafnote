@@ -1,0 +1,8 @@
+Build V28 - 2026-03-02-21:55
+- Landing Page Full Redesign (4 sections)
+- Hero, Beta Invitation, Vision, Hall of Fame
+- Senior-friendly: larger fonts, serif, green/wood tones
+- Tree ring card UI for Hall of Fame with placeholder data
+- No CheckCircle2 usage (safe import)
+- All model names: gemini-1.5-flash / gemini-1.5-pro
+- Auth: UUID normalization + Supabase sync
