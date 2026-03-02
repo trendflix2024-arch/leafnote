@@ -8,6 +8,115 @@ import { BookOpen, PenTool, Sparkles, Printer, ArrowRight, Heart, Wind, Flame, T
 import { Button } from '@/components/ui/button';
 import { BackgroundEffects } from '@/components/landing/BackgroundEffects';
 
+const ChatPreview = () => {
+    const messages = [
+        {
+            role: 'echo',
+            content: "안녕하세요, 작가님. 저는 작가님의 이야기를 담아낼 따뜻한 기록자 에코입니다. 혹시 작가님의 어린 시절, 가장 좋아하셨던 계절은 언제였나요?",
+            delay: 0.5
+        },
+        {
+            role: 'author',
+            content: "글쎄, 나는 가을이 참 좋았어. 동네 뒷산에서 친구들이랑 밤 주워 먹던 기억이 나거든.",
+            delay: 2.0
+        },
+        {
+            role: 'echo',
+            content: "아, 뒷산에서 친구분들과 밤을 주우셨군요! 참 정겨운 풍경입니다. 그때 함께했던 친구분들 중, 지금도 문득 생각나는 분이 있으신가요?",
+            delay: 3.5
+        }
+    ];
+
+    return (
+        <section className="mt-24 md:mt-40 relative px-4">
+            <div className="max-w-4xl mx-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-white rounded-[2.5rem] shadow-2xl shadow-emerald-900/10 border border-slate-100 overflow-hidden"
+                >
+                    {/* Mock Window Header */}
+                    <div className="bg-slate-50/50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                        <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-slate-200" />
+                            <div className="w-3 h-3 rounded-full bg-slate-200" />
+                            <div className="w-3 h-3 rounded-full bg-slate-200" />
+                        </div>
+                        <span className="text-xs font-serif font-bold text-slate-400 tracking-widest uppercase">Echo Narrative Interface</span>
+                        <div className="w-10" />
+                    </div>
+
+                    <div className="p-8 md:p-12 space-y-10 min-h-[500px] flex flex-col justify-center bg-[#FDFCFB]">
+                        {messages.map((msg, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: msg.delay, duration: 0.8 }}
+                                className={`flex ${msg.role === 'echo' ? 'justify-start' : 'justify-end'} items-start gap-4`}
+                            >
+                                {msg.role === 'echo' && (
+                                    <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-100 mt-1">
+                                        <Sprout size={20} className="text-white" />
+                                    </div>
+                                )}
+                                <div className={`max-w-[85%] md:max-w-[70%] space-y-2`}>
+                                    {msg.role === 'echo' && (
+                                        <div className="flex items-center gap-1.5 ml-1 mb-1">
+                                            <Sparkles size={12} className="text-emerald-500" />
+                                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-tight">따뜻한 기록가 에코</span>
+                                        </div>
+                                    )}
+                                    <div className={`p-6 md:p-7 rounded-3xl text-lg md:text-xl font-serif leading-relaxed shadow-sm ${msg.role === 'echo'
+                                        ? 'bg-white border border-slate-100 text-slate-800 rounded-tl-none'
+                                        : 'bg-emerald-600 text-white rounded-tr-none shadow-emerald-200/50'
+                                        }`}>
+                                        {msg.content}
+                                    </div>
+                                    {msg.role === 'echo' && (
+                                        <div className="flex gap-4 ml-2 mt-2">
+                                            <div className="text-[10px] text-slate-300 font-serif flex items-center gap-1">
+                                                <MessageCircle size={10} /> 음성 듣기
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Mock Input Bar */}
+                    <div className="px-8 py-6 bg-white border-t border-slate-50 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+                            <PenTool size={18} />
+                        </div>
+                        <div className="flex-1 h-12 bg-slate-50 rounded-full px-6 flex items-center text-slate-300 text-sm font-serif italic">
+                            내 대답을 입력해 주세요...
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                            <ArrowRight size={18} />
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 4.5 }}
+                    className="mt-12 text-center"
+                >
+                    <p className="text-xl md:text-2xl text-slate-800 font-serif font-bold break-keep">
+                        <span className="text-emerald-600">복잡한 글쓰기는 잊으세요.</span><br className="sm:hidden" /> 편안하게 대화만 하시면 한 권의 책이 됩니다.
+                    </p>
+                </motion.div>
+            </div>
+        </section>
+    );
+};
+
 export default function Home() {
     return (
         <div className="min-h-screen relative selection:bg-emerald-100 selection:text-emerald-900">
@@ -46,11 +155,11 @@ export default function Home() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="px-6 py-2.5 bg-emerald-500/10 text-emerald-700 rounded-full text-xs md:text-sm font-bold border border-emerald-500/20 uppercase tracking-[0.2em] inline-block backdrop-blur-md"
+                            className="px-6 py-2.5 bg-emerald-500/10 text-emerald-700 rounded-full text-xs font-bold border border-emerald-500/20 uppercase tracking-[0.2em] inline-block backdrop-blur-md"
                         >
                             Deep Narrative AI Publishing
                         </motion.span>
-                        <h1 className="text-5xl xs:text-6xl md:text-8xl lg:text-[10rem] font-serif font-bold text-slate-900 mt-8 md:mt-12 leading-[1.1] md:leading-tight tracking-tight break-keep">
+                        <h1 className="text-5xl xs:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-serif font-bold text-slate-900 mt-8 md:mt-12 leading-[1.2] md:leading-[1.15] tracking-tight break-keep">
                             기억을 꺼내어 <br className="hidden md:block" />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">리프노트</span>를 틔우다
                         </h1>
@@ -60,7 +169,7 @@ export default function Home() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4, duration: 0.8 }}
-                        className="text-lg md:text-2xl text-slate-500 max-w-3xl mx-auto leading-relaxed font-serif px-2"
+                        className="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed md:leading-relaxed font-serif px-2"
                     >
                         차가운 기술이 아닌, 당신의 이야기를 들어주는 <br className="md:hidden" /> 따뜻한 기록자 <span className="text-emerald-600 font-medium">에코(Echo)</span>. <br className="hidden md:block" />
                         묻어둔 기억을 AI 인터뷰로 깨워 <br className="md:hidden" /> 한 권의 책으로 선물해 드립니다.
@@ -74,7 +183,7 @@ export default function Home() {
                     >
                         <Button
                             size="lg"
-                            className="group w-full sm:w-auto px-8 md:px-12 py-6 md:py-8 text-lg md:text-xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 border-none overflow-hidden relative"
+                            className="group w-full sm:w-auto px-8 md:px-12 py-6 md:py-7 text-lg md:text-xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 border-none overflow-hidden relative"
                             onClick={() => window.location.href = '/onboarding'}
                         >
                             <span className="relative z-10 flex items-center justify-center">
@@ -88,7 +197,7 @@ export default function Home() {
                         <Button
                             variant="outline"
                             size="lg"
-                            className="px-8 md:px-10 py-6 md:py-8 text-lg md:text-xl rounded-full border-white/40 bg-white/20 backdrop-blur-md text-slate-700 hover:bg-white/40 hover:border-white/60 transition-all active:scale-95 shadow-lg shadow-black/[0.02] w-full sm:w-auto"
+                            className="px-8 md:px-10 py-6 md:py-7 text-lg md:text-xl rounded-full border-white/40 bg-white/20 backdrop-blur-md text-slate-700 hover:bg-white/40 hover:border-white/60 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/[0.02] w-full sm:w-auto"
                             onClick={() => window.location.href = '/brand'}
                         >
                             브랜드 스토리 보기
@@ -96,19 +205,21 @@ export default function Home() {
                     </motion.div>
                 </div>
 
+                <ChatPreview />
+
                 {/* 1. '경험 안내' 섹션 (How it works) */}
-                <div className="mt-24 md:mt-48">
+                <div className="mt-24 md:mt-40">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-16 md:mb-24"
+                        className="text-center mb-16 md:mb-20"
                     >
-                        <h2 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 mb-6">당신의 기억은 이렇게 한 권의 책이 됩니다.</h2>
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-6">당신의 기억은 이렇게 한 권의 책이 됩니다.</h2>
                         <p className="text-lg md:text-xl text-slate-500 font-serif">복잡한 글쓰기는 저희가 대신할게요.</p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-6xl mx-auto px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto px-4">
                         {[
                             { step: "Step 1", title: "에코와 대화하기", desc: "다정한 질문에 편안하게 답해보세요.", icon: <MessageCircle className="text-emerald-600" /> },
                             { step: "Step 2", title: "문장이 되는 마법", desc: "흩어진 기억을 아름다운 글로 다듬어 드립니다.", icon: <Sparkles className="text-teal-600" /> },
@@ -120,60 +231,60 @@ export default function Home() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.1 }}
-                                className="bg-white/80 backdrop-blur-xl border border-emerald-50/50 p-10 md:p-12 rounded-[2.5rem] shadow-xl shadow-emerald-900/5 text-center group hover:-translate-y-2 transition-all"
+                                className="bg-white/80 backdrop-blur-xl border border-emerald-50/50 p-10 md:p-10 rounded-[2.5rem] shadow-xl shadow-emerald-900/5 text-center group hover:-translate-y-2 transition-all"
                             >
-                                <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-8 group-hover:scale-110 transition-transform">
-                                    {React.cloneElement(item.icon as React.ReactElement, { size: 40 })}
+                                <div className="w-16 h-16 md:w-16 md:h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-6 group-hover:scale-110 transition-transform">
+                                    {React.cloneElement(item.icon as React.ReactElement, { size: 32 })}
                                 </div>
                                 <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-3 block">{item.step}</span>
-                                <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4 text-slate-800">{item.title}</h3>
-                                <p className="text-slate-500 text-base md:text-xl leading-relaxed font-serif">{item.desc}</p>
+                                <h3 className="text-2xl md:text-2xl font-serif font-bold mb-4 text-slate-800">{item.title}</h3>
+                                <p className="text-slate-500 text-base md:text-lg leading-relaxed md:leading-normal font-serif">{item.desc}</p>
                             </motion.div>
                         ))}
                     </div>
                 </div>
 
                 {/* 2. '무료 혜택 강조' 섹션 (베타테스트 안내) */}
-                <div className="mt-24 md:mt-48 max-w-5xl mx-auto px-4">
+                <div className="mt-24 md:mt-40 max-w-5xl mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="bg-emerald-50/60 backdrop-blur-xl border border-emerald-100 p-10 md:p-20 rounded-[3rem] text-center relative overflow-hidden"
+                        className="bg-emerald-50/60 backdrop-blur-xl border border-emerald-100 p-10 md:p-16 rounded-[3rem] text-center relative overflow-hidden"
                     >
                         <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-200/20 rounded-full blur-3xl" />
-                        <h2 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 mb-8 leading-tight">
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-8 leading-tight">
                             첫 씨앗 작가님을 위한 특별한 초대 <br />
                             <span className="text-emerald-600">(현재 100% 무료)</span>
                         </h2>
-                        <div className="text-lg md:text-2xl text-slate-700 font-serif leading-relaxed max-w-3xl mx-auto space-y-6">
+                        <div className="text-lg md:text-xl text-slate-700 font-serif leading-relaxed md:leading-normal max-w-3xl mx-auto space-y-6">
                             <p>리프노트는 현재 서비스의 깊이를 더해가는 중입니다. 지금 참여하시면 AI 인터뷰부터 디지털 자서전 완성까지 전 과정을 비용 부담 없이 100% 무료로 이용하실 수 있습니다.</p>
                         </div>
                     </motion.div>
                 </div>
 
                 {/* 3. '아이덴티티 및 명예의 전당' 섹션 */}
-                <div className="mt-32 md:mt-56">
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center px-4">
+                <div className="mt-32 md:mt-48">
+                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-20 items-center px-4">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            className="space-y-8 md:space-y-12"
+                            className="space-y-8 md:space-y-10"
                         >
-                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 leading-tight">당신의 이야기가 <br />누군가의 위로가 되고, <br /><span className="text-emerald-600">한 그루의 나무</span>가 됩니다.</h2>
+                            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 leading-tight">당신의 이야기가 <br />누군가의 위로가 되고, <br /><span className="text-emerald-600">한 그루의 나무</span>가 됩니다.</h2>
                             <div className="space-y-6">
                                 {[
                                     { icon: <TreePine />, title: "지구를 위한 기록", desc: "자서전 한 권이 완성될 때마다 실제 나무 한 그루를 기부합니다." },
                                     { icon: <Heart />, title: "소외 없는 기록", desc: "정보 취약 계층의 생애 기록 사업을 적극 지원합니다." }
                                 ].map((item, i) => (
                                     <div key={i} className="flex gap-6 items-start">
-                                        <div className="w-12 h-12 md:w-16 md:h-16 bg-white shadow-lg shadow-emerald-900/5 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
+                                        <div className="w-12 h-12 md:w-14 md:h-14 bg-white shadow-lg shadow-emerald-900/5 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <h4 className="text-lg md:text-2xl font-serif font-bold text-slate-800 mb-1">{item.title}</h4>
-                                            <p className="text-slate-500 text-base md:text-xl font-serif">{item.desc}</p>
+                                            <h4 className="text-lg md:text-xl font-serif font-bold text-slate-800 mb-1">{item.title}</h4>
+                                            <p className="text-slate-500 text-base md:text-lg font-serif">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -184,9 +295,9 @@ export default function Home() {
                             initial={{ opacity: 0, x: 30 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white/40 backdrop-blur-md border border-slate-100 p-8 md:p-12 rounded-[2.5rem] shadow-2xl shadow-emerald-900/5"
+                            className="bg-white/40 backdrop-blur-md border border-slate-100 p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-emerald-900/5"
                         >
-                            <h3 className="text-xl md:text-2xl font-serif font-bold text-slate-800 mb-8 pb-4 border-b border-slate-100 flex items-center gap-2">
+                            <h3 className="text-xl md:text-xl font-serif font-bold text-slate-800 mb-8 pb-4 border-b border-slate-100 flex items-center gap-2">
                                 <Sprout className="text-emerald-500" /> 리프노트의 깊은 뿌리가 되어주신 분들
                             </h3>
                             <div className="space-y-6">
@@ -197,8 +308,8 @@ export default function Home() {
                                 ].map((author, i) => (
                                     <div key={i} className="flex justify-between items-center group">
                                         <div className="space-y-1">
-                                            <p className="text-lg md:text-xl font-bold text-slate-700 font-serif group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{author.name}</p>
-                                            <p className="text-sm md:text-base text-slate-400 font-serif italic">"{author.desc}"</p>
+                                            <p className="text-lg md:text-lg font-bold text-slate-700 font-serif group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{author.name}</p>
+                                            <p className="text-sm md:text-sm text-slate-400 font-serif italic">"{author.desc}"</p>
                                         </div>
                                         <div className="text-[10px] font-bold text-emerald-500/50 uppercase tracking-tighter">Founder Author</div>
                                     </div>
@@ -216,23 +327,23 @@ export default function Home() {
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="mt-32 md:mt-56 text-center px-4 pb-24 md:pb-48 relative isolate"
+                    className="mt-32 md:mt-48 text-center px-4 pb-24 md:pb-40 relative isolate"
                 >
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[800px] h-[400px] md:h-[800px] bg-emerald-500/5 rounded-full blur-[120px] -z-10" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[120px] -z-10" />
 
-                    <h2 className="text-3xl md:text-6xl font-serif font-bold text-slate-900 mb-8 md:mb-12 leading-tight">
+                    <h2 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 mb-8 md:mb-10 leading-tight">
                         잊혀지기엔 너무나 아까운 <br className="hidden md:block" /> 당신의 인생 이야기.
                     </h2>
 
                     <Button
                         size="lg"
-                        className="group px-14 md:px-24 py-8 md:py-12 text-xl md:text-3xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4 mx-auto"
+                        className="group px-14 md:px-16 py-8 md:py-10 text-xl md:text-2xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4 mx-auto"
                         onClick={() => window.location.href = '/onboarding'}
                     >
                         [ 지금 무료로 첫 씨앗 심기 ] <ArrowRight className="group-hover:translate-x-3 transition-transform" />
                     </Button>
 
-                    <div className="mt-12 md:mt-20 flex flex-wrap justify-center gap-8 md:gap-16 items-center text-sm md:text-xl text-slate-400 font-serif">
+                    <div className="mt-12 md:mt-16 flex flex-wrap justify-center gap-8 md:gap-12 items-center text-sm md:text-lg text-slate-400 font-serif">
                         <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 첫 시작 100% 무료</span>
                         <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 초기 참여 작가 영구 기록</span>
                         <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 환경 보호 기여</span>
