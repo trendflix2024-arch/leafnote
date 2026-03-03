@@ -213,74 +213,68 @@ export default function InterviewPage() {
     return (
         <div className="flex flex-col h-screen bg-[#FAF9F6] paper-texture">
             {/* Header */}
-            <header className="border-b border-paper-edge bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-                <div className="max-w-4xl mx-auto p-3 md:p-6 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2 md:gap-3 group">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100/50 group-hover:scale-105 transition-transform">
-                            <svg width="20" height="20" className="md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <header className="border-b border-paper-edge bg-white/90 backdrop-blur-lg sticky top-0 z-50 transition-all">
+                <div className="max-w-4xl mx-auto p-2.5 md:p-6 flex justify-between items-center bg-white/50">
+                    <Link href="/" className="flex items-center gap-2 md:gap-3 group min-w-0">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-100/30 group-hover:scale-105 transition-transform">
+                            <svg width="18" height="18" className="md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 22C12 22 20 18 20 12C20 6 12 2 12 2C12 2 4 6 4 12C4 18 12 22 12 22Z" fill="white" fillOpacity="0.2" />
                                 <path d="M12 22V2M12 22C12 22 20 18 20 12C20 6 12 2 12 2M12 22C12 22 4 6 4 12C4 18 12 22 12 22ZM12 7C14 7 16 8 16 10M12 11C15 11 17 12 17 14M12 15C13.5 15 15 15.5 15 17M12 7C10 7 8 8 8 10M12 11C9 11 7 12 7 14M12 15C10.5 15 9 15.5 9 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                         </div>
-                        <div className="min-w-0">
-                            <h1 className="text-sm md:text-lg font-serif font-bold text-slate-800 leading-tight group-hover:text-emerald-700 transition-colors truncate">리프노트 <span className="text-emerald-600 text-[10px] md:text-xs">LeafNote</span></h1>
-                            <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
-                                <span className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate max-w-[100px] md:max-w-none">{currentProject.title}</span>
-                                <span className="text-[9px] md:text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">St. {currentProject.interviewStage || 1}</span>
+                        <div className="min-w-0 flex flex-col justify-center">
+                            <h1 className="text-[13px] md:text-lg font-serif font-bold text-slate-800 leading-none group-hover:text-emerald-700 transition-colors truncate">리프노트 <span className="text-emerald-600 text-[9px] md:text-xs font-sans">LeafNote</span></h1>
+                            <div className="flex items-center gap-1.5 md:gap-2 mt-1">
+                                <span className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-tighter md:tracking-widest truncate max-w-[80px] md:max-w-none">{currentProject.title}</span>
+                                <span className="text-[8px] md:text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-md font-bold shrink-0 border border-emerald-100/50">St. {currentProject.interviewStage || 1}</span>
                             </div>
                         </div>
                     </Link>
-                    <div className="flex gap-1 md:gap-2 items-center">
-                        <AnimatePresence mode="wait">
-                            {isSyncing ? (
-                                <motion.div
-                                    key="syncing"
-                                    initial={{ opacity: 0, x: 5 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-1 md:px-2.5 rounded-full border border-amber-100"
-                                >
-                                    <Loader2 size={10} className="animate-spin" />
-                                    <span className="hidden xs:inline">자동 저장 중...</span>
-                                </motion.div>
-                            ) : messages.length > 0 ? (
-                                <motion.div
-                                    key="saved"
-                                    initial={{ opacity: 0, x: 5 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 md:px-2.5 rounded-full border border-emerald-100"
-                                >
-                                    <CheckCircle2 size={10} />
-                                    <span className="hidden xs:inline">안전하게 저장됨</span>
-                                </motion.div>
-                            ) : null}
-                        </AnimatePresence>
-
-                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5 md:mx-1 hidden xs:block"></div>
-
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={messages.length < 2 || isLoading}
-                            className={`rounded-full h-8 w-8 p-0 hidden xs:flex ${messages.length >= 2 ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-slate-200'}`}
-                            onClick={undo}
-                            title="뒤로 되돌리기"
-                        >
-                            <RotateCcw size={16} />
-                        </Button>
+                    <div className="flex gap-1.5 md:gap-3 items-center shrink-0">
+                        <div className="hidden sm:block">
+                            <AnimatePresence mode="wait">
+                                {isSyncing ? (
+                                    <motion.div
+                                        key="syncing"
+                                        initial={{ opacity: 0, x: 5 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-1 md:px-2.5 rounded-full border border-amber-100"
+                                    >
+                                        <Loader2 size={10} className="animate-spin" />
+                                        <span className="hidden xs:inline">자동 저장 중...</span>
+                                    </motion.div>
+                                ) : messages.length > 0 ? (
+                                    <motion.div
+                                        key="saved"
+                                        initial={{ opacity: 0, x: 5 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 md:px-2.5 rounded-full border border-emerald-100"
+                                    >
+                                        <CheckCircle2 size={10} />
+                                        <span className="hidden xs:inline">안전하게 저장됨</span>
+                                    </motion.div>
+                                ) : null}
+                            </AnimatePresence>
+                        </div>
 
                         <Button
                             variant={autoSpeak ? "default" : "outline"}
                             size="sm"
-                            className={`rounded-full text-[10px] md:text-xs h-7 md:h-8 transition-all px-2 md:px-3 ${autoSpeak ? 'bg-emerald-600 hover:bg-emerald-700 border-none text-white' : 'text-slate-500'}`}
+                            className={`rounded-full text-[10px] md:text-xs h-7 md:h-8 transition-all px-2.5 md:px-4 ${autoSpeak ? 'bg-emerald-600 hover:bg-emerald-700 border-none text-white' : 'text-slate-500 bg-white/50 border-slate-200'}`}
                             onClick={toggleAutoSpeak}
                         >
-                            {autoSpeak ? <Volume2 size={12} className="md:mr-1" /> : <VolumeX size={12} className="md:mr-1" />}
+                            {autoSpeak ? <Volume2 size={14} className="md:mr-1.5" /> : <VolumeX size={14} className="md:mr-1.5" />}
                             <span className="hidden xs:inline">{autoSpeak ? '음성 ON' : '음성 OFF'}</span>
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="text-slate-500 h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs">
-                            <ArrowLeft className="md:mr-1 h-3.5 w-3.5" /> <span className="hidden xs:inline">나중에</span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push('/dashboard')}
+                            className="text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 h-7 md:h-8 px-1.5 md:px-3 text-[10px] md:text-xs flex items-center"
+                        >
+                            <ArrowLeft className="mr-0.5 md:mr-1 h-3.5 w-3.5" /> <span>나중에</span>
                         </Button>
                     </div>
                 </div>
