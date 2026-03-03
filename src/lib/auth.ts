@@ -6,11 +6,21 @@ import type { NextAuthOptions } from "next-auth";
 // SMS OTP verification removed as per user request
 
 // Helper for deterministic UUID generation from numeric strings (phone, google id)
+// Helper for deterministic UUID generation
 function toUUID(id: string): string {
+    // If already a UUID, return as is
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return id;
-    const clean = id.replace(/[^0-9]/g, '');
-    const padded = clean.padStart(32, '0').slice(-32);
-    return `${padded.slice(0, 8)}-${padded.slice(8, 12)}-${padded.slice(12, 16)}-${padded.slice(16, 20)}-${padded.slice(20, 32)}`;
+
+    // Deterministic hashing for any string to UUID format
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        const char = id.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+
+    const hex = Math.abs(hash).toString(16).padStart(32, '0');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -32,8 +42,7 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("아이디와 비밀번호를 입력해주세요.");
                 }
 
-                // Simplified Auth: In this version, we accept the password as is.
-                // For a real production app with security requirements, password hashing and checking would happen here.
+                // In this simplified version, we accept the password as is.
                 const userId = toUUID(credentials.id);
                 const name = credentials.name || '작가님';
 
@@ -48,10 +57,10 @@ export const authOptions: NextAuthOptions = {
     ],
     pages: {
         signIn: "/login",
+        error: "/login", // Redirect to login on error
     },
     callbacks: {
         async signIn({ user, account }) {
-            console.log('SignIn callback triggered for:', user?.id, 'Account type:', account?.provider);
             if (!user?.id) return true;
 
             const userId = toUUID(user.id);
@@ -64,13 +73,11 @@ export const authOptions: NextAuthOptions = {
                         id: userId,
                         name: user.name || '작가님',
                         email: user.email || '',
-                        phone: loginId, // Storing ID in the phone field for compatibility if needed, or we could add a new field
+                        phone: loginId,
                         updated_at: new Date().toISOString(),
                     }, { onConflict: 'id' });
 
-                if (error) {
-                    console.error('Supabase sync error:', error);
-                }
+                if (error) console.error('Supabase sync error:', error);
             } catch (err) {
                 console.error('Supabase sync exception:', err);
             }
@@ -78,7 +85,7 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) {
-                // Ensure ID is always in UUID format (Google IDs are numeric strings, Credentials IDs are already UUIDs)
+                // Ensure ID is always in UUID format
                 token.id = toUUID(user.id);
                 token.loginId = (user as any).idPlain || user.id;
             }
@@ -92,21 +99,11 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
     },
-    secret: process.env.NEXTAUTH_SECRET || "leafnote-staging-secret-1234567890",
+    secret: process.env.NEXTAUTH_SECRET,
     session: {
         strategy: "jwt",
-        maxAge: 100 * 365 * 24 * 60 * 60, // 100 years = indefinite session
+        maxAge: 100 * 365 * 24 * 60 * 60, // 100 years
     },
-    cookies: {
-        sessionToken: {
-            name: `next-auth.session-token`,
-            options: {
-                httpOnly: true,
-                sameSite: 'lax',
-                path: '/',
-                secure: process.env.NODE_ENV === "production",
-            },
-        },
-    },
-    debug: true,
+    // Removed explicit cookies block to let NextAuth handle it based on NEXTAUTH_URL
+    debug: process.env.NODE_ENV === "development",
 };
