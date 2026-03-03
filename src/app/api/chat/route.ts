@@ -1,17 +1,15 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { genAI } from '@/lib/openai';
 
 export async function POST(request: Request) {
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            console.error("GEMINI_API_KEY is missing in environment variables.");
+        if (!genAI) {
+            console.error("GEMINI_API_KEY is missing/genAI not initialized.");
             return new Response(JSON.stringify({ error: 'AI 설정이 완료되지 않았습니다. 관리자에게 문의하세요.' }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
         const body = await request.json();
         const {
             message, // for echo chat
@@ -73,7 +71,7 @@ ${writingsContext}
 `.trim();
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: systemInstruction
         });
 

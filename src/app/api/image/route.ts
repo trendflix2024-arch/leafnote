@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const { title, author, concept, frontDesc, spineDesc, backDesc } = await req.json();
 
     // Use gemini-pro for design parameter generation
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
       당신은 수석 출판 북 디자이너입니다. 사용자가 입력한 내용을 바탕으로 세련된 3D 책 표지 디자인 명세서를 작성해야 합니다.
