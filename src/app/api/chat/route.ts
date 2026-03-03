@@ -27,16 +27,37 @@ export async function POST(request: Request) {
         const sourceMessages = messages || chatHistory;
 
         if (sourceMessages && Array.isArray(sourceMessages)) {
-            geminiHistory = sourceMessages
+            const rawHistory = sourceMessages
                 .filter((m: any) => m.content && m.content.trim())
                 .map((m: any) => ({
                     role: m.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: m.content }]
                 }));
 
+            let validHistory: any[] = [];
+            for (const msg of rawHistory) {
+                if (validHistory.length === 0) {
+                    if (msg.role === 'model') {
+                        validHistory.push({ role: 'user', parts: [{ text: track === 'casual' ? '안녕 에코?' : '인터뷰를 시작하고 싶어요.' }] });
+                    }
+                    validHistory.push(msg);
+                } else {
+                    const lastRole = validHistory[validHistory.length - 1].role;
+                    if (msg.role !== lastRole) {
+                        validHistory.push(msg);
+                    } else {
+                        validHistory[validHistory.length - 1].parts[0].text += "\n" + msg.parts[0].text;
+                    }
+                }
+            }
+            geminiHistory = validHistory;
+
             // If it's a long conversation, only take the last 10 for performance/focus
             if (geminiHistory.length > 10) {
                 geminiHistory = geminiHistory.slice(-10);
+                if (geminiHistory[0].role === 'model') {
+                    geminiHistory.shift();
+                }
             }
         }
 
