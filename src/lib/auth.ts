@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { supabase } from "@/lib/supabase";
 import type { NextAuthOptions } from "next-auth";
-import { verifyOTP } from "@/lib/sms";
+// SMS OTP verification removed as per user request
 
 // Helper for deterministic UUID generation from numeric strings (phone, google id)
 function toUUID(id: string): string {
@@ -23,32 +23,25 @@ export const authOptions: NextAuthOptions = {
             id: "credentials",
             name: "Credentials",
             credentials: {
-                phone: { label: "Phone Number", type: "text" },
-                code: { label: "Verification Code", type: "text" },
+                id: { label: "ID", type: "text" },
+                password: { label: "Password", type: "password" },
                 name: { label: "Name", type: "text" },
             },
             async authorize(credentials) {
-                if (!credentials?.phone || !credentials?.code) {
-                    throw new Error("인증 정보가 부족합니다.");
+                if (!credentials?.id || !credentials?.password) {
+                    throw new Error("아이디와 비밀번호를 입력해주세요.");
                 }
 
-                const phone = credentials.phone.replace(/[^0-9]/g, '');
-
-                // Verify OTP
-                const isValid = verifyOTP(phone, credentials.code);
-
-                if (!isValid) {
-                    throw new Error("인증번호가 일치하지 않거나 만료되었습니다.");
-                }
-
-                const userId = toUUID(phone);
+                // Simplified Auth: In this version, we accept the password as is.
+                // For a real production app with security requirements, password hashing and checking would happen here.
+                const userId = toUUID(credentials.id);
                 const name = credentials.name || '작가님';
 
                 return {
                     id: userId,
                     name: name,
-                    email: `${phone}@leafnote.ai`,
-                    phone: phone,
+                    email: `${credentials.id}@leafnote.ai`,
+                    idPlain: credentials.id,
                 };
             },
         }),
@@ -62,7 +55,7 @@ export const authOptions: NextAuthOptions = {
             if (!user?.id) return true;
 
             const userId = toUUID(user.id);
-            const phone = (user as any).phone || (user.id.length < 15 ? user.id : '');
+            const loginId = (user as any).idPlain || user.id;
 
             try {
                 const { error } = await supabase
@@ -71,7 +64,7 @@ export const authOptions: NextAuthOptions = {
                         id: userId,
                         name: user.name || '작가님',
                         email: user.email || '',
-                        phone: phone,
+                        phone: loginId, // Storing ID in the phone field for compatibility if needed, or we could add a new field
                         updated_at: new Date().toISOString(),
                     }, { onConflict: 'id' });
 
@@ -86,14 +79,14 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.phone = (user as any).phone;
+                token.loginId = (user as any).idPlain;
             }
             return token;
         },
         async session({ session, token }) {
             if (token && session.user) {
                 (session.user as any).id = token.id;
-                (session.user as any).phone = token.phone;
+                (session.user as any).loginId = token.loginId;
             }
             return session;
         },
@@ -101,7 +94,7 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET || "leafnote-staging-secret-1234567890",
     session: {
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 days default
+        maxAge: 100 * 365 * 24 * 60 * 60, // 100 years = indefinite session
     },
     cookies: {
         sessionToken: {

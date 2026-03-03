@@ -51,6 +51,7 @@ export function useInterview(options?: UseInterviewOptions) {
                 body: JSON.stringify({
                     messages: currentMessages,
                     projectTitle: currentProject.title,
+                    track: 'interview'
                 }),
             });
 
@@ -137,6 +138,7 @@ export function useInterview(options?: UseInterviewOptions) {
                 body: JSON.stringify({
                     messages: continuationMessages,
                     projectTitle: currentProject.title,
+                    track: 'interview'
                 }),
             });
 

@@ -48,7 +48,8 @@ export default function ChatPage() {
                         body: JSON.stringify({
                             isInitial: true,
                             context,
-                            userName: session.user.name || '작가님'
+                            userName: session.user.name || '작가님',
+                            track: 'casual'
                         })
                     });
 
@@ -110,9 +111,10 @@ export default function ChatPage() {
                 method: 'POST',
                 body: JSON.stringify({
                     message: userMessage,
-                    history: chatHistory.slice(-10), // Send last 10 messages for context
+                    history: chatHistory.slice(-10),
                     context,
-                    userName: session?.user?.name || '작가님'
+                    userName: session?.user?.name || '작가님',
+                    track: 'casual'
                 })
             });
 
@@ -172,7 +174,8 @@ export default function ChatPage() {
                     history: chatHistory,
                     message: "이어서 계속 말씀해주세요.",
                     context,
-                    userName: session?.user?.name || '작가님'
+                    userName: session?.user?.name || '작가님',
+                    track: 'casual'
                 })
             });
 
