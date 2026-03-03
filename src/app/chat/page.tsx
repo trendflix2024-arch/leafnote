@@ -51,7 +51,7 @@ export default function ChatPage() {
                         .map(p => ({
                             title: p.title,
                             interviewData: p.interviewData,
-                            fullDraft: p.fullDraft.substring(0, 500)
+                            fullDraft: (p.fullDraft || '').substring(0, 500)
                         }));
 
                     const res = await fetch('/api/chat', {
@@ -124,7 +124,7 @@ export default function ChatPage() {
                 .map(p => ({
                     title: p.title,
                     interviewData: p.interviewData,
-                    fullDraft: p.fullDraft.substring(0, 500)
+                    fullDraft: (p.fullDraft || '').substring(0, 500)
                 }));
 
             const res = await fetch('/api/chat', {
@@ -185,7 +185,7 @@ export default function ChatPage() {
                 .map(p => ({
                     title: p.title,
                     interviewData: p.interviewData,
-                    fullDraft: p.fullDraft.substring(0, 500)
+                    fullDraft: (p.fullDraft || '').substring(0, 500)
                 }));
 
             const res = await fetch('/api/chat', {
