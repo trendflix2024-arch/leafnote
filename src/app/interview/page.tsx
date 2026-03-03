@@ -366,7 +366,7 @@ export default function InterviewPage() {
                                             )}
                                         </button>
 
-                                        {i === messages.length - 1 && !isLoading && !m.content.trim().match(/[.!?\"'」』\)]$/) && (
+                                        {i === messages.length - 1 && !isLoading && !m.content.replace(/[^a-zA-Z가-힣0-9.!?~"\'」』\\)]+$/, '').match(/[.!?~"\'」』\\)]$/) && (
                                             <button
                                                 onClick={() => continueConversation()}
                                                 className="flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all border border-amber-100"

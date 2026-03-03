@@ -264,7 +264,7 @@ export default function ChatPage() {
                                         <p key={idx}>{line}</p>
                                     ))}
 
-                                    {msg.role === 'assistant' && i === chatHistory.length - 1 && !isTyping && !msg.content.trim().match(/[.!?\"'」』\)]$/) && (
+                                    {msg.role === 'assistant' && i === chatHistory.length - 1 && !isTyping && !msg.content.replace(/[^a-zA-Z가-힣0-9.!?~"\'」』\\)]+$/, '').match(/[.!?~"\'」』\\)]$/) && (
                                         <button
                                             onClick={handleContinue}
                                             className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 transition-all border border-amber-200 shadow-sm"
