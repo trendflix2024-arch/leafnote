@@ -11,10 +11,13 @@ import Link from 'next/link';
 export default function ChatPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { chatHistory, addChatMessage, projects, userProfile } = useBookStore();
+    const { chatHistory, addChatMessage, projects, userProfile, setChatHistory } = useBookStore();
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const [showContinuationPrompt, setShowContinuationPrompt] = useState(false);
+    const hasPromptedRef = useRef(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -28,10 +31,18 @@ export default function ChatPage() {
         }
     }, [chatHistory, isTyping]);
 
+    // Check for existing history on mount
+    useEffect(() => {
+        if (status === 'authenticated' && chatHistory.length > 0 && !hasPromptedRef.current) {
+            setShowContinuationPrompt(true);
+            hasPromptedRef.current = true;
+        }
+    }, [status, chatHistory.length]);
+
     // Initial greeting if history is empty
     useEffect(() => {
         const fetchGreeting = async () => {
-            if (chatHistory.length === 0 && session?.user) {
+            if (chatHistory.length === 0 && session?.user && !showContinuationPrompt) {
                 setIsTyping(true);
                 try {
                     // Gather context for the initial greeting
@@ -87,7 +98,16 @@ export default function ChatPage() {
             }
         };
         if (status === 'authenticated') fetchGreeting();
-    }, [status, session, chatHistory.length]);
+    }, [status, session, chatHistory.length, showContinuationPrompt]);
+
+    const handleStartNewConversation = () => {
+        setChatHistory([]);
+        setShowContinuationPrompt(false);
+    };
+
+    const handleContinueConversation = () => {
+        setShowContinuationPrompt(false);
+    };
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -212,7 +232,50 @@ export default function ChatPage() {
     if (status === 'loading') return null;
 
     return (
-        <div className="min-h-screen bg-[#faf9f6] flex flex-col">
+        <div className="min-h-screen bg-[#faf9f6] flex flex-col relative">
+            {/* Continuation Overlay */}
+            <AnimatePresence>
+                {showContinuationPrompt && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: -20 }}
+                            className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-emerald-100 relative overflow-hidden text-center"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5 text-emerald-600 shadow-inner">
+                                <Sparkles size={28} />
+                            </div>
+
+                            <h3 className="text-xl font-bold font-serif text-slate-800 mb-2 break-keep">어떻게 대화를 시작할까요?</h3>
+                            <p className="text-sm text-slate-500 mb-8 break-keep">이전 대화가 남아있습니다. 이어서 대화하려면 계속하기를, 백지에서 새로 시작하려면 새로운 대화를 선택해 주세요.</p>
+
+                            <div className="space-y-3">
+                                <button
+                                    onClick={handleContinueConversation}
+                                    className="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
+                                >
+                                    <MessageCircle size={18} /> 이전 대화 이어하기
+                                </button>
+                                <button
+                                    onClick={handleStartNewConversation}
+                                    className="w-full py-4 px-6 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
+                                >
+                                    <RotateCcw size={18} /> 새로운 대화 시작하기
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <header className="bg-white border-b sticky top-0 z-20">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
