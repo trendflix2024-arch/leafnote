@@ -55,8 +55,8 @@ export async function POST(req: Request) {
 
         // Use Gemini 1.5 Flash TTS
         const models = [
-            'gemini-1.5-flash-latest-8b-latest',
-            'gemini-1.5-flash-latest',
+            'gemini-2.5-flash-8b-latest',
+            'gemini-2.5-flash',
         ];
 
         for (const model of models) {
