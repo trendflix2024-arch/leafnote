@@ -71,7 +71,7 @@ ${writingsContext}
 `.trim();
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash-latest",
             systemInstruction: systemInstruction
         });
 

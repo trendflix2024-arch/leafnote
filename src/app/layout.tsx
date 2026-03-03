@@ -6,7 +6,7 @@ import { SessionWatcher } from "@/components/SessionWatcher";
 export const metadata: Metadata = {
     title: "리프노트 LeafNote - 당신의 대화가 한 권의 잎이 되는 시간",
     description: "AI 인터뷰로 당신의 소중한 기억을 한 권의 책으로 피워내세요. 따뜻한 기록가 리프노트.",
-    keywords: ["리프노트", "LeafNote", "자서전", "AI 인터뷰", "개인 출판", "기록", "부모님 선물"],
+    keywords: ["리프노트", "LeafNote", "인생 기록", "AI 인터뷰", "개인 출판", "기록", "부모님 선물"],
     manifest: "/manifest.json",
     openGraph: {
         title: "리프노트 LeafNote - 모든 인생은 한 권의 책이다",

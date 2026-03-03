@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { supabase } from "@/lib/supabase";
 import type { NextAuthOptions } from "next-auth";
+import { verifyOTP } from "@/lib/sms";
 
 // Helper for deterministic UUID generation from numeric strings (phone, google id)
 function toUUID(id: string): string {
@@ -22,14 +23,23 @@ export const authOptions: NextAuthOptions = {
             id: "credentials",
             name: "Credentials",
             credentials: {
-                phone: { label: "Phone Number", type: "text", placeholder: "01012345678" },
-                name: { label: "Name", type: "text", placeholder: "작가님 성함" },
+                phone: { label: "Phone Number", type: "text" },
+                code: { label: "Verification Code", type: "text" },
+                name: { label: "Name", type: "text" },
             },
             async authorize(credentials) {
-                if (!credentials?.phone) return null;
+                if (!credentials?.phone || !credentials?.code) {
+                    throw new Error("인증 정보가 부족합니다.");
+                }
 
                 const phone = credentials.phone.replace(/[^0-9]/g, '');
-                if (phone.length < 8) return null;
+
+                // Verify OTP
+                const isValid = verifyOTP(phone, credentials.code);
+
+                if (!isValid) {
+                    throw new Error("인증번호가 일치하지 않거나 만료되었습니다.");
+                }
 
                 const userId = toUUID(phone);
                 const name = credentials.name || '작가님';
@@ -67,8 +77,6 @@ export const authOptions: NextAuthOptions = {
 
                 if (error) {
                     console.error('Supabase sync error:', error);
-                    // Don't block sign-in for sync errors during this critical fix phase
-                    // return false; 
                 }
             } catch (err) {
                 console.error('Supabase sync exception:', err);
@@ -93,7 +101,7 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET || "leafnote-staging-secret-1234567890",
     session: {
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: 30 * 24 * 60 * 60, // 30 days default
     },
     cookies: {
         sessionToken: {

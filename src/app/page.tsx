@@ -4,9 +4,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { BookOpen, PenTool, Sparkles, Printer, ArrowRight, Heart, Wind, Flame, TreePine, Sprout, CheckCircle2, MessageCircle } from 'lucide-react';
+import { BookOpen, PenTool, Sparkles, Printer, ArrowRight, Heart, Wind, Flame, TreePine, Sprout, CheckCircle2, MessageCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BackgroundEffects } from '@/components/landing/BackgroundEffects';
+import { useSession } from 'next-auth/react';
+import { useBookStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 
 const ChatPreview = () => {
     const messages = [
@@ -118,6 +121,10 @@ const ChatPreview = () => {
 };
 
 export default function Home() {
+    const { data: session } = useSession();
+    const { userProfile } = useBookStore();
+    const router = useRouter();
+
     return (
         <div className="min-h-screen relative selection:bg-emerald-100 selection:text-emerald-900">
             <BackgroundEffects />
@@ -132,15 +139,33 @@ export default function Home() {
                     <span className="text-lg md:text-2xl font-serif font-bold text-slate-800 tracking-tight whitespace-nowrap">리프노트 <span className="text-emerald-600 hidden xs:inline">LeafNote</span></span>
                 </div>
                 <div className="flex gap-3 md:gap-4 items-center">
-                    <a href="/pricing" className="text-xs md:text-sm text-slate-500 hover:text-slate-800 transition-colors">요금제</a>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-600 text-xs md:text-sm px-2 md:px-4"
-                        onClick={() => window.location.href = '/login'}
-                    >
-                        로그인
-                    </Button>
+                    {!session ? (
+                        <>
+                            <a href="/pricing" className="text-xs md:text-sm text-slate-500 hover:text-slate-800 transition-colors">요금제</a>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-slate-600 text-xs md:text-sm px-2 md:px-4"
+                                onClick={() => router.push('/login')}
+                            >
+                                로그인
+                            </Button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all overflow-hidden shadow-sm"
+                            title="나의 숲(대시보드)으로 이동"
+                        >
+                            {userProfile?.avatar || session.user?.image ? (
+                                <img src={userProfile?.avatar || session.user?.image || ''} alt="P" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="font-bold text-xs md:text-sm font-serif">
+                                    {(userProfile?.name || session.user?.name || 'A')[0]}
+                                </span>
+                            )}
+                        </button>
+                    )}
                 </div>
             </nav>
 
@@ -223,7 +248,7 @@ export default function Home() {
                         {[
                             { step: "Step 1", title: "에코와 대화하기", desc: "다정한 질문에 편안하게 답해보세요.", icon: <MessageCircle className="text-emerald-600" /> },
                             { step: "Step 2", title: "문장이 되는 마법", desc: "흩어진 기억을 아름다운 글로 다듬어 드립니다.", icon: <Sparkles className="text-teal-600" /> },
-                            { step: "Step 3", title: "자서전 완성", desc: "나만의 나이테를 품은 디지털 책이 완성됩니다.", icon: <BookOpen className="text-emerald-700" /> }
+                            { step: "Step 3", title: "이야기 완성", desc: "나만의 나이테를 품은 디지털 책이 완성됩니다.", icon: <BookOpen className="text-emerald-700" /> }
                         ].map((item, idx) => (
                             <motion.div
                                 key={idx}
@@ -244,24 +269,6 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* 2. '무료 혜택 강조' 섹션 (베타테스트 안내) */}
-                <div className="mt-24 md:mt-40 max-w-5xl mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="bg-emerald-50/60 backdrop-blur-xl border border-emerald-100 p-10 md:p-16 rounded-[3rem] text-center relative overflow-hidden"
-                    >
-                        <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-200/20 rounded-full blur-3xl" />
-                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-8 leading-tight">
-                            첫 씨앗 작가님을 위한 특별한 초대 <br />
-                            <span className="text-emerald-600">(현재 100% 무료)</span>
-                        </h2>
-                        <div className="text-lg md:text-xl text-slate-700 font-serif leading-relaxed md:leading-normal max-w-3xl mx-auto space-y-6">
-                            <p>리프노트는 현재 서비스의 깊이를 더해가는 중입니다. 지금 참여하시면 AI 인터뷰부터 디지털 자서전 완성까지 전 과정을 비용 부담 없이 100% 무료로 이용하실 수 있습니다.</p>
-                        </div>
-                    </motion.div>
-                </div>
 
                 {/* 3. '아이덴티티 및 명예의 전당' 섹션 */}
                 <div className="mt-32 md:mt-48">
@@ -275,7 +282,7 @@ export default function Home() {
                             <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 leading-tight">당신의 이야기가 <br />누군가의 위로가 되고, <br /><span className="text-emerald-600">한 그루의 나무</span>가 됩니다.</h2>
                             <div className="space-y-6">
                                 {[
-                                    { icon: <TreePine />, title: "지구를 위한 기록", desc: "자서전 한 권이 완성될 때마다 실제 나무 한 그루를 기부합니다." },
+                                    { icon: <TreePine />, title: "지구를 위한 기록", desc: "이야기 한 권이 완성될 때마다 실제 나무 한 그루를 기부합니다." },
                                     { icon: <Heart />, title: "소외 없는 기록", desc: "정보 취약 계층의 생애 기록 사업을 적극 지원합니다." }
                                 ].map((item, i) => (
                                     <div key={i} className="flex gap-6 items-start">
@@ -335,18 +342,36 @@ export default function Home() {
                         잊혀지기엔 너무나 아까운 <br className="hidden md:block" /> 당신의 인생 이야기.
                     </h2>
 
-                    <Button
-                        size="lg"
-                        className="group px-14 md:px-16 py-8 md:py-10 text-xl md:text-2xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-4 mx-auto"
-                        onClick={() => window.location.href = '/onboarding'}
-                    >
-                        [ 지금 무료로 첫 씨앗 심기 ] <ArrowRight className="group-hover:translate-x-3 transition-transform" />
-                    </Button>
+                    <div className="flex flex-col items-center gap-6">
+                        <Button
+                            size="lg"
+                            className="group w-full sm:w-auto px-10 md:px-16 py-8 md:py-10 text-xl md:text-2xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 border-none overflow-hidden relative mx-auto"
+                            onClick={() => window.location.href = '/onboarding'}
+                        >
+                            <span className="relative z-10 flex items-center justify-center">
+                                기록의 시작, 씨앗 심기 <ArrowRight className="ml-3 md:ml-4 group-hover:translate-x-3 transition-transform" />
+                            </span>
+                            <motion.div
+                                className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                initial={false}
+                            />
+                        </Button>
 
-                    <div className="mt-12 md:mt-16 flex flex-wrap justify-center gap-8 md:gap-12 items-center text-sm md:text-lg text-slate-400 font-serif">
-                        <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 첫 시작 100% 무료</span>
-                        <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 초기 참여 작가 영구 기록</span>
-                        <span className="flex items-center gap-3"><CheckCircle2 size={24} className="text-emerald-500/60" /> 환경 보호 기여</span>
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.3 }}
+                            className="bg-emerald-50 px-6 py-2 rounded-full border border-emerald-100 flex items-center gap-2 shadow-sm"
+                        >
+                            <Sparkles size={16} className="text-emerald-600 animate-pulse" />
+                            <span className="text-sm md:text-base font-serif font-bold text-emerald-800">베타 테스트 기간 100% 무료 제공</span>
+                        </motion.div>
+                    </div>
+
+                    <div className="mt-16 md:mt-24 flex flex-wrap justify-center gap-8 md:gap-12 items-center text-sm md:text-base text-slate-400 font-serif">
+                        <span className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500/60" /> 초기 참여 작가 영구 기록</span>
+                        <span className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500/60" /> 환경 보호 기여</span>
                     </div>
                 </motion.div>
             </main>

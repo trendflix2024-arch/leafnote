@@ -32,7 +32,7 @@ const plans = [
         name: '에코 프리미엄',
         price: '79,000',
         period: '/권',
-        desc: '전문 품질의 자서전',
+        desc: '전문 품질의 기록',
         color: 'from-amber-500 to-orange-500',
         features: ['베이직 기능 전체 포함', 'PDF 고품질 다운로드', '표지 디자인 6종', 'AI 음성 TTS', '전문 에디터 리뷰', '종이책 주문 (별도)'],
         popular: true,
@@ -83,8 +83,8 @@ export default function PaymentPage() {
                                         transition={{ delay: i * 0.1 }}
                                         onClick={() => setSelectedPlan(plan.id)}
                                         className={`relative cursor-pointer rounded-2xl p-6 transition-all ${selectedPlan === plan.id
-                                                ? 'ring-2 ring-amber-500 shadow-xl scale-[1.02] bg-white'
-                                                : 'bg-white shadow-sm border border-slate-100 hover:shadow-md'
+                                            ? 'ring-2 ring-amber-500 shadow-xl scale-[1.02] bg-white'
+                                            : 'bg-white shadow-sm border border-slate-100 hover:shadow-md'
                                             }`}
                                     >
                                         {plan.popular && (

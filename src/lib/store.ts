@@ -79,6 +79,7 @@ interface BookStore {
   setTempOnboardingData: (data: { name: string; topic: string; tone: string } | null) => void;
   tempOnboardingData: { name: string; topic: string; tone: string } | null;
   updateLastInterviewQuestion: (question: string) => Promise<void>;
+  fetchUserProfile: () => Promise<void>;
   resetAll: () => void;
 }
 
@@ -198,7 +199,8 @@ export const useBookStore = create<BookStore>()(
 
       createProject: async (title) => {
         const id = Math.random().toString(36).substring(2, 9);
-        const newProject = createInitialProject(id, title);
+        const authorName = get().userProfile?.name || '작가님';
+        const newProject = { ...createInitialProject(id, title), author: authorName };
 
         set((state) => ({
           projects: [newProject, ...state.projects],
@@ -413,7 +415,9 @@ export const useBookStore = create<BookStore>()(
         if (updates.name) {
           set((state) => ({
             projects: state.projects.map(p =>
-              p.author === currentProfile.name ? { ...p, author: updates.name! } : p
+              (p.author === currentProfile.name || p.author === '작가님')
+                ? { ...p, author: updates.name!, updatedAt: Date.now() }
+                : p
             )
           }));
         }
@@ -431,6 +435,33 @@ export const useBookStore = create<BookStore>()(
             });
         } catch (e) {
           console.error('Failed to sync profile to Supabase:', e);
+        }
+      },
+
+      fetchUserProfile: async () => {
+        const userId = get().userProfile?.id;
+        if (!userId) return;
+
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            set({
+              userProfile: {
+                id: data.id,
+                name: data.name || '작가님',
+                email: data.email || '',
+                avatar: data.avatar_url || undefined,
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Fetch User Profile Failed:', err);
         }
       },
 

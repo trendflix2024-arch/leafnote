@@ -17,10 +17,14 @@ function LoginContent() {
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
     const [mode, setMode] = useState<'login' | 'register'>('login');
+    const [step, setStep] = useState<1 | 2>(1);
     const [phone, setPhone] = useState('');
     const [name, setName] = useState('');
+    const [code, setCode] = useState('');
+    const [remember, setRemember] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [timer, setTimer] = useState(0);
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -28,43 +32,78 @@ function LoginContent() {
         }
     }, [status, router, callbackUrl]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timer]);
 
-        if (!phone || (mode === 'register' && !name)) {
-            setError('모든 정보를 입력해주세요.');
+    const handleRequestCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!phone) {
+            setError('휴대폰 번호를 입력해주세요.');
+            return;
+        }
+        if (mode === 'register' && !name) {
+            setError('작가님 성함을 입력해주세요.');
             return;
         }
 
         setIsLoading(true);
         setError('');
 
-        const phoneVal = phone.replace(/[^0-9]/g, '');
-        const nameVal = mode === 'register' ? name : '';
+        try {
+            const res = await fetch('/api/auth/otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone }),
+            });
 
-        console.log('SignIn attempt:', { mode, phone: '***' });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || '인증번호 발송 실패');
+            }
+
+            setStep(2);
+            setTimer(300); // 5 minutes
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyAndLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!code) {
+            setError('인증번호를 입력해주세요.');
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
 
         try {
-            // NextAuth v4 credentials signature: signIn('credentials', { ...credentials, redirect, callbackUrl })
             const result = await signIn('credentials', {
-                phone: phoneVal,
-                name: nameVal,
+                phone: phone.replace(/[^0-9]/g, ''),
+                code,
+                name: mode === 'register' ? name : '',
                 redirect: false,
                 callbackUrl
             });
 
-            console.log('SignIn result:', result);
-
             if (result?.error) {
-                setError(`로그인 실패 (${result.error}).`);
-            } else if (result?.url) {
-                router.push(result.url);
+                setError('인증번호가 일치하지 않거나 만료되었습니다.');
             } else {
                 router.push(callbackUrl);
             }
         } catch (err: any) {
-            console.error('SignIn error:', err);
-            setError(`오류 발생: ${err.message || '알 수 없는 오류'}`);
+            setError('로그인 중 오류가 발생했습니다.');
         } finally {
             setIsLoading(false);
         }
@@ -72,6 +111,12 @@ function LoginContent() {
 
     const handleGoogleLogin = () => {
         signIn('google', { callbackUrl });
+    };
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -98,18 +143,20 @@ function LoginContent() {
                 {/* Card */}
                 <div className="bg-white rounded-3xl p-8 shadow-xl border border-paper-edge leaf-shadow">
                     {/* Tabs */}
-                    <div className="flex bg-slate-50 rounded-2xl p-1.5 mb-8">
-                        {(['login', 'register'] as const).map(m => (
-                            <button
-                                key={m}
-                                onClick={() => setMode(m)}
-                                className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all ${mode === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                                    }`}
-                            >
-                                {m === 'login' ? '로그인' : '회원가입'}
-                            </button>
-                        ))}
-                    </div>
+                    {step === 1 && (
+                        <div className="flex bg-slate-50 rounded-2xl p-1.5 mb-8">
+                            {(['login', 'register'] as const).map(m => (
+                                <button
+                                    key={m}
+                                    onClick={() => { setMode(m); setError(''); }}
+                                    className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all ${mode === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                        }`}
+                                >
+                                    {m === 'login' ? '로그인' : '회원가입'}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {error && (
                         <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs rounded-xl font-medium flex items-center justify-center">
@@ -117,52 +164,118 @@ function LoginContent() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Phone Number Field - Corrected for senior-friendly login */}
-                        <div className="relative group">
-                            <div className="absolute left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-focus-within:bg-emerald-600 group-focus-within:text-white transition-all">
-                                <Phone size={20} />
-                            </div>
-                            <Input
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="휴대폰 번호 (예: 01012345678)"
-                                className="pl-20 bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-8 rounded-[1.5rem] text-xl font-medium placeholder:text-slate-300 transition-all shadow-inner w-full"
-                            />
-                        </div>
-
-                        {mode === 'register' && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="relative group">
-                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-focus-within:bg-emerald-600 group-focus-within:text-white transition-all">
-                                        <User size={20} />
-                                    </div>
-                                    <Input
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="작가님 성함"
-                                        className="pl-20 bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-8 rounded-[1.5rem] text-xl font-medium placeholder:text-slate-300 transition-all shadow-inner w-full"
-                                    />
+                    {step === 1 ? (
+                        <form onSubmit={handleRequestCode} className="space-y-6">
+                            <div className="relative group">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-focus-within:bg-emerald-600 group-focus-within:text-white transition-all">
+                                    <Phone size={20} />
                                 </div>
-                            </motion.div>
-                        )}
+                                <Input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="휴대폰 번호 (예: 01012345678)"
+                                    className="pl-20 bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-8 rounded-[1.5rem] text-xl font-medium placeholder:text-slate-300 transition-all shadow-inner w-full"
+                                />
+                            </div>
 
-                        <div className="pt-4">
-                            <Button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full py-9 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xl shadow-xl shadow-emerald-100 transition-all active:scale-[0.98] border-none flex items-center justify-center gap-3"
+                            {mode === 'register' && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="relative group">
+                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-focus-within:bg-emerald-600 group-focus-within:text-white transition-all">
+                                            <User size={20} />
+                                        </div>
+                                        <Input
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="작가님 성함"
+                                            className="pl-20 bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-8 rounded-[1.5rem] text-xl font-medium placeholder:text-slate-300 transition-all shadow-inner w-full"
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            <div className="flex items-center gap-2 px-2">
+                                <input
+                                    type="checkbox"
+                                    id="remember"
+                                    checked={remember}
+                                    onChange={(e) => setRemember(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <label htmlFor="remember" className="text-sm font-medium text-slate-500 cursor-pointer">
+                                    로그인 상태 유지
+                                </label>
+                            </div>
+
+                            <div className="pt-2">
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full py-9 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xl shadow-xl shadow-emerald-100 transition-all active:scale-[0.98] border-none flex items-center justify-center gap-3"
+                                >
+                                    <span>{isLoading ? '발송 중...' : '인증번호 받기'}</span>
+                                    <ArrowRight size={24} />
+                                </Button>
+                            </div>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerifyAndLogin} className="space-y-6">
+                            <div className="text-center mb-4">
+                                <p className="text-slate-500 text-sm">{phone} 번호로 인증번호를 보냈습니다.</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(1)}
+                                    className="text-emerald-600 text-xs font-bold mt-1 hover:underline"
+                                >
+                                    번호 수정하기
+                                </button>
+                            </div>
+
+                            <div className="relative group">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 group-focus-within:bg-emerald-600 group-focus-within:text-white transition-all">
+                                    <BookOpen size={20} />
+                                </div>
+                                <Input
+                                    type="text"
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    placeholder="인증번호 6자리"
+                                    maxLength={6}
+                                    className="pl-20 bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-8 rounded-[1.5rem] text-xl font-medium placeholder:text-slate-300 transition-all shadow-inner w-full tracking-[0.5em]"
+                                />
+                                {timer > 0 && (
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-rose-500 font-bold text-sm">
+                                        {formatTime(timer)}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-2">
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading || timer === 0}
+                                    className="w-full py-9 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xl shadow-xl shadow-emerald-100 transition-all active:scale-[0.98] border-none flex items-center justify-center gap-3"
+                                >
+                                    <span>{isLoading ? '인증 중...' : '기록 시작하기'}</span>
+                                    <ArrowRight size={24} />
+                                </Button>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleRequestCode}
+                                disabled={isLoading || timer > 270}
+                                className="w-full text-slate-400 text-sm font-medium hover:text-emerald-600 transition-colors disabled:opacity-50"
                             >
-                                <span>{isLoading ? '준비 중...' : mode === 'login' ? '기록 시작하기' : '잎사귀 틔우기'}</span>
-                                <ArrowRight size={24} />
-                            </Button>
-                        </div>
-                    </form>
+                                {timer > 270 ? '인증번호를 다시 받으시겠습니까?' : '인증번호 재발송'}
+                            </button>
+                        </form>
+                    )}
 
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
@@ -203,7 +316,6 @@ function LoginContent() {
         </div>
     );
 }
-
 export default function LoginPage() {
     return (
         <React.Suspense fallback={<div className="min-h-screen bg-[#FAF9F6] p-4 flex items-center justify-center font-serif text-slate-400">로딩 중...</div>}>

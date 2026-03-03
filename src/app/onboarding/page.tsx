@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBookStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, BookOpen, Book, Baby, Heart, Compass, Briefcase, Plane, Users, Edit3, Sprout } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 const TOPICS = [
     { id: 'autobiography', label: '나의 인생 이야기', icon: Book, desc: '평범하지만 위대했던 당신의 계절들을 기록합니다.' },
@@ -31,12 +32,24 @@ const TONES = [
 ];
 
 export default function OnboardingPage() {
+    const { data: session } = useSession();
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
     const [selectedTopic, setSelectedTopic] = useState('');
     const [selectedTone, setSelectedTone] = useState('');
     const [customTopic, setCustomTopic] = useState('');
-    const { setTempOnboardingData } = useBookStore();
+    const { setTempOnboardingData, userProfile } = useBookStore();
+
+    // Auto-populate name if logged in and skip Step 0
+    useEffect(() => {
+        if (userProfile?.name && name === '') {
+            setName(userProfile.name);
+            if (step === 0) setStep(1);
+        } else if (session?.user?.name && name === '') {
+            setName(session.user.name);
+            if (step === 0) setStep(1);
+        }
+    }, [userProfile, session, name, step]);
 
     // AI Subject Suggestions
     const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
@@ -74,8 +87,12 @@ export default function OnboardingPage() {
         // Store onboarding data temporarily
         setTempOnboardingData({ name, topic: topicLabel, tone: toneLabel });
 
-        // Redirect to login with callback to interview
-        window.location.href = '/login?callbackUrl=/interview';
+        // Redirect to interview if logged in, otherwise to login
+        if (session) {
+            window.location.href = '/interview';
+        } else {
+            window.location.href = '/login?callbackUrl=/interview';
+        }
     };
 
     const canProceed = () => {

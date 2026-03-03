@@ -53,13 +53,13 @@ export async function POST(req: Request) {
             .trim()
             .substring(0, 4000);
 
-        // Use Gemini 2.5 Flash TTS
-        const ttsModels = [
-            'gemini-2.5-flash-preview-tts',
-            'gemini-2.5-pro-preview-tts',
+        // Use Gemini 1.5 Flash TTS
+        const models = [
+            'gemini-1.5-flash-8b-latest',
+            'gemini-1.5-flash-latest',
         ];
 
-        for (const model of ttsModels) {
+        for (const model of models) {
             try {
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,

@@ -70,7 +70,7 @@ export default function GuideStartPage() {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">숲이 되는 여정</span>
                     </h1>
                     <p className="text-xl text-slate-500 font-serif mt-8 max-w-2xl mx-auto leading-relaxed">
-                        한 권의 자서전을 완성하는 과정은 쉽고 즐거워야 합니다.<br />
+                        한 권의 책을 완성하는 과정은 쉽고 즐거워야 합니다.<br />
                         리프노트와 함께 시작하는 네 가지 단계를 소개합니다.
                     </p>
                 </motion.div>
@@ -83,7 +83,7 @@ export default function GuideStartPage() {
                         icon={Sprout}
                         step="01"
                         title="기억의 씨앗 심기 (Setting)"
-                        description="가장 먼저 기록하고 싶은 주제를 고르고 필명을 정합니다. 자서전, 태교 일기, 커리어 회고록 등 당신의 삶이 담길 가장 첫 번째 그릇을 준비하는 단계입니다."
+                        description="가장 먼저 기록하고 싶은 주제를 고르고 필명을 정합니다. 수필, 태교 일기, 커리어 회고록 등 당신의 삶이 담길 가장 첫 번째 그릇을 준비하는 단계입니다."
                         color="bg-emerald-500"
                         delay={0.1}
                     />

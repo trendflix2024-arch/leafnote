@@ -1,13 +1,109 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+
+function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
+    const [isVisible, setIsVisible] = useState(false);
+    const router = useRouter();
+    const { userProfile } = useBookStore();
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsVisible(true), 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const hasStories = activeProjects.length > 0;
+    // Mock data for "latest story keyword"
+    const latestKeyword = hasStories ? (activeProjects[0].title.split(' ')[0] || '최근') : '';
+
+    return (
+        <AnimatePresence>
+            {isVisible && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="mt-12 mb-8 max-w-2xl"
+                >
+                    <div className="flex items-start gap-4">
+                        {/* Echo Avatar */}
+                        <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-100 mt-1">
+                            <Sprout size={24} className="text-white" />
+                        </div>
+
+                        <div className="space-y-3 flex-1">
+                            <div className="flex items-center gap-2 ml-1">
+                                <Sparkles size={14} className="text-emerald-500" />
+                                <span className="text-xs font-bold text-emerald-600 uppercase tracking-tight">따뜻한 기록가 에코</span>
+                            </div>
+
+                            {/* Speech Bubble */}
+                            <div className="bg-emerald-50 border border-emerald-100/50 p-5 rounded-3xl rounded-tl-none shadow-sm relative group">
+                                <p className="text-base sm:text-lg text-slate-800 font-serif leading-relaxed break-keep">
+                                    {hasStories ? (
+                                        <>
+                                            작가님 오셨군요! 지난번에 들려주신 <span className="text-emerald-700 font-bold">'{latestKeyword}'</span> 이야기가 참 따뜻했어요. 오늘은 어떤 이야기를 나눠볼까요?
+                                        </>
+                                    ) : (
+                                        <>
+                                            {userProfile?.name || '작가'}님, 오늘 하루 어떻게 시작하셨나요? 제가 재미삼아 작가님의 오늘의 운세를 살짝 알아봐 드릴까요?
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+
+                            {/* Action Chips */}
+                            <div className="flex flex-wrap gap-2 ml-1">
+                                {!hasStories ? (
+                                    <>
+                                        <button
+                                            onClick={() => router.push('/chat?mode=fortune')}
+                                            className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full hover:bg-emerald-50 transition-all shadow-sm active:scale-95"
+                                        >
+                                            🔮 오늘의 운세 보기
+                                        </button>
+                                        <button
+                                            onClick={() => router.push('/chat')}
+                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                                        >
+                                            ☕ 그냥 수다 떨기
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                const { switchProject } = useBookStore.getState();
+                                                switchProject(activeProjects[0].id);
+                                                router.push('/interview');
+                                            }}
+                                            className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full hover:bg-emerald-50 transition-all shadow-sm active:scale-95"
+                                        >
+                                            🌳 이어서 기록하기
+                                        </button>
+                                        <button
+                                            onClick={() => router.push('/chat')}
+                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                                        >
+                                            💬 새로운 대화 나누기
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
 
 export default function DashboardPage() {
     const { data: session, status } = useSession();
@@ -159,14 +255,14 @@ export default function DashboardPage() {
                                 {session.user?.image ? (
                                     <img src={session.user.image} alt="P" className="w-full h-full object-cover" />
                                 ) : (
-                                    <span>{session.user?.name?.[0] || 'A'}</span>
+                                    <span>{(userProfile?.name || session.user?.name || 'A')[0]}</span>
                                 )}
                             </button>
                             {showMenu === 'user' && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-30">
                                     <div className="px-4 py-2 border-b mb-1">
                                         <p className="text-xs text-slate-400">내 계정</p>
-                                        <p className="text-sm font-bold text-slate-800 truncate">{session.user?.name || session.user?.email}</p>
+                                        <p className="text-sm font-bold text-slate-800 truncate">{userProfile?.name || session.user?.name || session.user?.email}</p>
                                     </div>
                                     <button onClick={() => router.push('/profile')} className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 flex items-center gap-2"><UserCircle size={16} /> 프로필</button>
                                     <button onClick={() => router.push('/settings')} className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 flex items-center gap-2"><Settings size={16} /> 설정</button>
@@ -185,31 +281,32 @@ export default function DashboardPage() {
                 {/* Welcome */}
                 <div className="mb-6 sm:mb-8">
                     <h2 className="text-xl sm:text-3xl font-serif font-bold text-slate-900 mb-1 sm:mb-2 leading-tight break-keep">
-                        안녕하세요, <span className="text-emerald-700">{(session.user?.name || '기록가').split(' ')[0]}</span> 작가님 <span className="inline-block animate-bounce-subtle">👋</span>
+                        안녕하세요, <span className="text-emerald-700">{(userProfile?.name || session.user?.name || '기록가').split(' ')[0]}</span> 작가님 <span className="inline-block animate-bounce-subtle">👋</span>
                     </h2>
                     <p className="text-sm sm:text-lg text-slate-500 font-medium">당신의 소중한 이야기를 한 권의 잎으로 기록해 보세요.</p>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
+                {/* Stats - Reformatted for Seniors (3 Cards) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
                     {[
-                        { label: '활동 중인 나무', value: activeProjects.length.toString(), icon: TreePine, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-                        { label: '기록된 잎사귀', value: totalWords.toLocaleString(), icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-                        { label: '단단한 줄기', value: totalChapters.toString(), icon: Edit3, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-                        { label: '완성된 숲', value: '0', icon: Crown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+                        { label: '기록된 잎사귀 (작성한 이야기)', value: totalWords.toLocaleString(), icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+                        { label: '자라나는 나무 (진행 중인 이야기)', value: activeProjects.length.toString(), icon: TreePine, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+                        { label: '완성된 숲 (출판된 책)', value: '0', icon: Crown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
                     ].map((stat, i) => (
                         <motion.div
                             key={stat.label}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-100/80 hover:shadow-md transition-all group"
+                            className="bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-sm border border-slate-100/80 hover:shadow-md transition-all group flex items-center gap-6"
                         >
-                            <div className={`${stat.bgColor} w-8 h-8 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform`}>
-                                <stat.icon size={18} className={`${stat.color}`} />
+                            <div className={`${stat.bgColor} w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                <stat.icon size={28} className={`${stat.color}`} />
                             </div>
-                            <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
-                            <p className="text-[10px] sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1 uppercase tracking-wider">{stat.label}</p>
+                            <div>
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{stat.value}<span className="text-sm ml-1 text-slate-400 font-normal">{stat.label.includes('잎사귀') ? '자' : stat.label.includes('나무') ? '그루' : '권'}</span></p>
+                            </div>
                         </motion.div>
                     ))}
                 </div>
@@ -549,16 +646,29 @@ export default function DashboardPage() {
                         );
                     })}
 
-                    {!isCreating && (
+                    {/* Empty State: Dainty Invitation Card */}
+                    {!isCreating && activeProjects.length === 0 && (
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: activeProjects.length * 0.1 }}
-                            className="bg-white/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center min-h-[160px] hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer group"
-                            onClick={() => setIsCreating(true)}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="lg:col-span-3 bg-[#FDFBF7] rounded-[2.5rem] p-12 sm:p-20 border border-emerald-100/50 text-center shadow-sm relative overflow-hidden"
                         >
-                            <Plus size={32} className="text-slate-300 group-hover:text-emerald-500 transition-colors mb-2" />
-                            <p className="text-sm text-slate-400 group-hover:text-emerald-600 font-serif font-bold">새 씨앗 심기</p>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500/20"></div>
+                            <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-lg shadow-emerald-50 text-emerald-600">
+                                <Plus size={44} />
+                            </div>
+                            <h4 className="text-2xl sm:text-3xl font-serif font-bold text-slate-800 mb-6 break-keep leading-tight">
+                                아직 심어진 이야기 씨앗이 없네요.
+                            </h4>
+                            <p className="text-base sm:text-xl text-slate-500 mb-12 break-keep font-medium">
+                                에코가 작가님의 첫 이야기를 기다리고 있어요.
+                            </p>
+                            <Button
+                                onClick={() => setIsCreating(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-20 px-12 rounded-2xl shadow-xl shadow-emerald-100 text-xl transition-all active:scale-95 border-none"
+                            >
+                                에코와 첫 대화 나누기
+                            </Button>
                         </motion.div>
                     )}
                 </div>
@@ -610,6 +720,8 @@ export default function DashboardPage() {
                         )}
                     </div>
                 )}
+                {/* Dynamic Greeting (Echo) */}
+                <DynamicGreeting activeProjects={activeProjects} />
             </main>
 
             {/* Mobile Bottom Navigation - Improved Visibility */}
