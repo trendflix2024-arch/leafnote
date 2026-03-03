@@ -135,7 +135,17 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error("Echo Chat API Error:", error);
-        return new Response(JSON.stringify({ error: error.message || "오류가 발생했습니다." }), {
+
+        let errorMessage = "오류가 발생했습니다.";
+
+        // Handle Gemini Quota / Rate Limit errors gracefully
+        if (error.message && (error.message.includes('429') || error.message.includes('Quota'))) {
+            errorMessage = "앗, 지금은 에코가 너무 많은 작가님들과 대화하느라 지쳤어요! 😢 잠시 후 다시 말을 걸어주시겠어요?";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        return new Response(JSON.stringify({ error: errorMessage }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
