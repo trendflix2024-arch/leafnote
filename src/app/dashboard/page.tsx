@@ -88,12 +88,6 @@ function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
                                         >
                                             🌳 이어서 기록하기
                                         </button>
-                                        <button
-                                            onClick={() => router.push('/chat')}
-                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:bg-slate-50 transition-all shadow-sm active:scale-95"
-                                        >
-                                            💬 새로운 대화 나누기
-                                        </button>
                                     </>
                                 )}
                             </div>
