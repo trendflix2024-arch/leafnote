@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, ArrowRight, BookOpen } from 'lucide-react';
+import { User, ArrowRight, BookOpen, Search, KeyRound, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { signIn, useSession } from 'next-auth/react';
@@ -23,6 +23,49 @@ function LoginContent() {
     const [remember, setRemember] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [findModal, setFindModal] = useState<'none' | 'find-id' | 'reset-pw'>('none');
+    const [findName, setFindName] = useState('');
+    const [findId, setFindId] = useState('');
+    const [findResult, setFindResult] = useState('');
+    const [findError, setFindError] = useState('');
+    const [findLoading, setFindLoading] = useState(false);
+
+    const handleFindId = async () => {
+        if (!findName) { setFindError('성함을 입력해주세요.'); return; }
+        setFindLoading(true); setFindError(''); setFindResult('');
+        try {
+            const res = await fetch('/api/auth/find', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'find-id', name: findName })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setFindResult(`${data.message}\n아이디: ${data.ids.join(', ')}`);
+        } catch (err: any) { setFindError(err.message); }
+        finally { setFindLoading(false); }
+    };
+
+    const handleResetPw = async () => {
+        if (!findId) { setFindError('아이디를 입력해주세요.'); return; }
+        setFindLoading(true); setFindError(''); setFindResult('');
+        try {
+            const res = await fetch('/api/auth/find', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'reset-password', id: findId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setFindResult(data.message);
+        } catch (err: any) { setFindError(err.message); }
+        finally { setFindLoading(false); }
+    };
+
+    const openFindModal = (type: 'find-id' | 'reset-pw') => {
+        setFindModal(type);
+        setFindName(''); setFindId(''); setFindResult(''); setFindError('');
+    };
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -184,6 +227,25 @@ function LoginContent() {
                         </div>
                     </form>
 
+                    {/* Find ID / Reset Password Links */}
+                    <div className="flex justify-center gap-4 mt-5">
+                        <button
+                            type="button"
+                            onClick={() => openFindModal('find-id')}
+                            className="text-xs text-slate-400 hover:text-emerald-600 font-medium transition-colors"
+                        >
+                            아이디 찾기
+                        </button>
+                        <span className="text-slate-200">|</span>
+                        <button
+                            type="button"
+                            onClick={() => openFindModal('reset-pw')}
+                            className="text-xs text-slate-400 hover:text-emerald-600 font-medium transition-colors"
+                        >
+                            비밀번호 찾기
+                        </button>
+                    </div>
+
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
                         <div className="relative flex justify-center text-xs uppercase tracking-widest text-slate-400"><span className="bg-white px-4">OR</span></div>
@@ -220,6 +282,84 @@ function LoginContent() {
                     © 2026 LeafNote • Narrative AI Publishing
                 </p>
             </motion.div>
+            {/* Find ID / Reset PW Modal */}
+            {findModal !== 'none' && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    onClick={() => setFindModal('none')}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                {findModal === 'find-id' ? (
+                                    <><Search size={20} className="text-emerald-600" /> 아이디 찾기</>
+                                ) : (
+                                    <><KeyRound size={20} className="text-emerald-600" /> 비밀번호 찾기</>
+                                )}
+                            </h2>
+                            <button onClick={() => setFindModal('none')} className="text-slate-300 hover:text-slate-500 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {findModal === 'find-id' ? (
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500">회원가입 시 입력한 성함을 입력해주세요.</p>
+                                <Input
+                                    value={findName}
+                                    onChange={(e) => setFindName(e.target.value)}
+                                    placeholder="작가님 성함"
+                                    className="bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-6 rounded-xl text-base font-medium placeholder:text-slate-300"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleFindId()}
+                                />
+                                <Button
+                                    onClick={handleFindId}
+                                    disabled={findLoading}
+                                    className="w-full py-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg"
+                                >
+                                    {findLoading ? '조회 중...' : '아이디 찾기'}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500">등록된 아이디를 입력하시면 비밀번호를 초기화해 드립니다.</p>
+                                <Input
+                                    value={findId}
+                                    onChange={(e) => setFindId(e.target.value)}
+                                    placeholder="아이디"
+                                    className="bg-slate-50 border-2 border-transparent focus:border-emerald-500 py-6 rounded-xl text-base font-medium placeholder:text-slate-300"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleResetPw()}
+                                />
+                                <Button
+                                    onClick={handleResetPw}
+                                    disabled={findLoading}
+                                    className="w-full py-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg"
+                                >
+                                    {findLoading ? '처리 중...' : '비밀번호 초기화'}
+                                </Button>
+                            </div>
+                        )}
+
+                        {findError && (
+                            <div className="mt-4 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-xs rounded-xl text-center font-medium">
+                                {findError}
+                            </div>
+                        )}
+                        {findResult && (
+                            <div className="mt-4 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-xl text-center font-medium whitespace-pre-line">
+                                {findResult}
+                            </div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
         </div>
     );
 }

@@ -18,10 +18,16 @@ export default withAuth(
 export const config = {
     matcher: [
         "/dashboard/:path*",
+        "/dashboard",
         "/editor/:path*",
+        "/editor",
         "/interview/:path*",
+        "/interview",
         "/profile/:path*",
+        "/profile",
         "/settings/:path*",
+        "/settings",
         "/onboarding/:path*",
+        "/onboarding",
     ],
 };

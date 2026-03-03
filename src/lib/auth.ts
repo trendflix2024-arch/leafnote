@@ -78,8 +78,9 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) {
-                token.id = user.id;
-                token.loginId = (user as any).idPlain;
+                // Ensure ID is always in UUID format (Google IDs are numeric strings, Credentials IDs are already UUIDs)
+                token.id = toUUID(user.id);
+                token.loginId = (user as any).idPlain || user.id;
             }
             return token;
         },
@@ -103,7 +104,7 @@ export const authOptions: NextAuthOptions = {
                 httpOnly: true,
                 sameSite: 'lax',
                 path: '/',
-                secure: true,
+                secure: process.env.NODE_ENV === "production",
             },
         },
     },

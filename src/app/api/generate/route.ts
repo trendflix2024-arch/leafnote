@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         }
 
         // Using gemini-pro for better creative writing and length
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const toneInstruction = tone ?
             `\n      **(필수 지침) 전체 글의 분위기와 문체를 반드시 '${tone}' 느낌으로 작성해주세요.**` : '';
