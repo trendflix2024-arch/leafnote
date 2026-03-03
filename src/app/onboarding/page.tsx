@@ -17,7 +17,7 @@ const TOPICS = [
     { id: 'career', label: '일과 열정의 자취 (회고록)', icon: Briefcase, desc: '치열하게 쌓아온 경험의 기록이 누군가의 길잡이가 되도록.' },
     { id: 'travel', label: '세상을 만난 여행의 기록', icon: Plane, desc: '낯선 길 위에서 마주한 찬란한 풍경과 깨달음.' },
     { id: 'family', label: '가족의 뿌리 깊은 이야기', icon: Users, desc: '흐릿해진 가계의 기억을 잇고 다음 세대에 전합니다.' },
-    { id: 'custom', label: '나만의 새로운 이야기', icon: Edit3, desc: '정해진 형식 없이 당신만의 자유로운 서사를 시작합니다.' },
+    { id: 'hobby', label: '빛나는 취미와 일상', icon: Compass, desc: '나를 미소 짓게 하는 소소한 취미와 매일의 발견을 기록합니다.' },
 ];
 
 const TONES = [
