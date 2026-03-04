@@ -60,6 +60,13 @@ export default function PricingPage() {
     return (
         <div className="min-h-screen bg-[#faf9f6] py-12 md:py-20 px-4 md:px-6">
             <div className="max-w-6xl mx-auto">
+                <div className="mb-10 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-5 text-center">
+                    <p className="text-emerald-800 font-medium text-sm md:text-base leading-relaxed">
+                        🌿 베타 테스트 기간 동안 초고 생성, 커버 디자인, PDF 다운로드까지 제한 없이 사용하실 수 있습니다.<br className="hidden md:block" />
+                        <span className="text-emerald-700"> 베타 종료 후에도 베타 참여자분들은 특별 혜택이 제공됩니다.</span>
+                    </p>
+                </div>
+
                 <div className="text-center mb-16">
                     <span className="px-4 py-2 rounded-full bg-slate-100 text-sm text-slate-600 font-medium">Pricing</span>
                     <h1 className="text-2xl md:text-5xl font-serif font-bold text-slate-800 mt-6 mb-4">당신의 이야기에 맞는 플랜</h1>
