@@ -6,7 +6,7 @@ import { useBookStore } from "@/lib/store";
 
 export function SessionWatcher() {
     const { data: session, status } = useSession();
-    const { setUserProfile, fetchProjects, fetchUserProfile, resetAll, userProfile } = useBookStore();
+    const { setUserProfile, fetchProjects, fetchUserProfile, fetchChatHistory, resetAll, userProfile } = useBookStore();
     const hasFetchedRef = useRef(false);
 
     useEffect(() => {
@@ -26,6 +26,7 @@ export function SessionWatcher() {
                 const sync = async () => {
                     await fetchUserProfile();
                     await fetchProjects();
+                    await fetchChatHistory();
                 };
                 sync();
                 hasFetchedRef.current = true;
@@ -34,7 +35,7 @@ export function SessionWatcher() {
             resetAll();
             hasFetchedRef.current = false;
         }
-    }, [session, status, setUserProfile, fetchProjects, fetchUserProfile, resetAll, userProfile?.id]);
+    }, [session, status, setUserProfile, fetchProjects, fetchUserProfile, fetchChatHistory, resetAll, userProfile?.id]);
 
     return null;
 }

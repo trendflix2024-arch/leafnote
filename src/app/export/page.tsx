@@ -97,7 +97,7 @@ export default function ExportPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${projectTitle}.epub.html`;
+            a.download = `${projectTitle}.epub`;
             a.click();
             URL.revokeObjectURL(url);
         } catch (error) {
@@ -168,9 +168,9 @@ export default function ExportPage() {
                                         ) : (
                                             <div className="w-full h-full flex flex-col">
                                                 <p className="text-base font-serif text-slate-700 leading-loose whitespace-pre-wrap text-justify">
-                                                    {pages[currentPage * 2 - 2]}
+                                                    {pages[(currentPage - 2) * 2]}
                                                 </p>
-                                                <div className="mt-auto text-center pt-8 text-xs text-slate-400 font-serif">{currentPage * 2 - 2}</div>
+                                                <div className="mt-auto text-center pt-8 text-xs text-slate-400 font-serif">{(currentPage - 2) * 2 + 1}</div>
                                             </div>
                                         )}
                                     </div>
@@ -204,9 +204,9 @@ export default function ExportPage() {
                                         ) : (
                                             <div className="w-full h-full flex flex-col">
                                                 <p className="text-base font-serif text-slate-700 leading-loose whitespace-pre-wrap text-justify">
-                                                    {pages[currentPage * 2 - 1] || ''}
+                                                    {pages[(currentPage - 2) * 2 + 1] || ''}
                                                 </p>
-                                                <div className="mt-auto text-center pt-8 text-xs text-slate-400 font-serif">{currentPage * 2 - 1}</div>
+                                                <div className="mt-auto text-center pt-8 text-xs text-slate-400 font-serif">{(currentPage - 2) * 2 + 2}</div>
                                             </div>
                                         )}
                                     </div>

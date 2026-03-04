@@ -80,6 +80,7 @@ interface BookStore {
   tempOnboardingData: { name: string; topic: string; tone: string } | null;
   updateLastInterviewQuestion: (question: string) => Promise<void>;
   fetchUserProfile: () => Promise<void>;
+  fetchChatHistory: () => Promise<void>;
   resetAll: () => void;
 }
 
@@ -517,6 +518,31 @@ export const useBookStore = create<BookStore>()(
       },
 
       setChatHistory: (history) => set({ chatHistory: history }),
+
+      fetchChatHistory: async () => {
+        const userId = get().userProfile?.id;
+        if (!userId) return;
+
+        try {
+          const { data, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('user_id', userId)
+            .order('timestamp', { ascending: true });
+
+          if (error) throw error;
+          if (data) {
+            const formatted: ChatMessage[] = data.map(m => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              timestamp: new Date(m.timestamp).getTime(),
+            }));
+            set({ chatHistory: formatted });
+          }
+        } catch (err) {
+          console.error('Fetch Chat History Failed:', err);
+        }
+      },
 
       resetAll: () => set({ projects: [], currentProjectId: null, userProfile: null, tempOnboardingData: null, chatHistory: [] }),
     }),

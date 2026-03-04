@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (session && (session.user as any)?.isNewUser) {
-            const userId = (session.user as any).id || '';
+            const userId = (session.user as any).id as string || '';
             const alreadySet = localStorage.getItem(`leafnote-name-set-${userId}`);
             if (!alreadySet) {
                 setShowNamePrompt(true);

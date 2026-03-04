@@ -32,24 +32,26 @@ const TONES = [
 ];
 
 export default function OnboardingPage() {
-    const { data: session } = useSession();
-    const [step, setStep] = useState(0);
+    const { data: session, status } = useSession();
+    const [step, setStep] = useState(-1); // -1 = 세션 로딩 중
     const [name, setName] = useState('');
     const [selectedTopic, setSelectedTopic] = useState('');
     const [selectedTone, setSelectedTone] = useState('');
     const [customTopic, setCustomTopic] = useState('');
     const { setTempOnboardingData, userProfile } = useBookStore();
 
-    // Auto-populate name if logged in and skip Step 0
+    // 세션 로딩 완료 후 초기 step 결정 (flash 방지)
     useEffect(() => {
-        if (userProfile?.name && name === '') {
-            setName(userProfile.name);
-            if (step === 0) setStep(1);
-        } else if (session?.user?.name && name === '') {
-            setName(session.user.name);
-            if (step === 0) setStep(1);
+        if (status === 'loading') return;
+        if (step !== -1) return;
+        const knownName = userProfile?.name || session?.user?.name || '';
+        if (knownName) {
+            setName(knownName);
+            setStep(1);
+        } else {
+            setStep(0);
         }
-    }, [userProfile, session, name, step]);
+    }, [status, userProfile, session, step]);
 
     // AI Subject Suggestions
     const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
@@ -75,10 +77,12 @@ export default function OnboardingPage() {
 
     // Auto-suggest when reaching step 1
     const [hasSuggested, setHasSuggested] = useState(false);
-    if (step === 1 && !hasSuggested) {
-        setHasSuggested(true);
-        handleSuggestTopics();
-    }
+    useEffect(() => {
+        if (step === 1 && !hasSuggested) {
+            setHasSuggested(true);
+            handleSuggestTopics();
+        }
+    }, [step, hasSuggested]);
 
     const handleComplete = () => {
         const topicLabel = selectedTopic === 'custom' ? customTopic : (TOPICS.find((t) => t.id === selectedTopic)?.label || selectedTopic);
@@ -101,6 +105,8 @@ export default function OnboardingPage() {
         if (step === 2) return selectedTone !== '';
         return true;
     };
+
+    if (step === -1) return null;
 
     return (
         <div className="min-h-screen bg-[#FAF9F6] paper-texture flex flex-col items-center pt-24 pb-32 px-4 md:px-6">
