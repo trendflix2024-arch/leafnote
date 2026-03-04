@@ -4,14 +4,32 @@ import GoogleProvider from "next-auth/providers/google";
 import { supabase } from "@/lib/supabase";
 import type { NextAuthOptions } from "next-auth";
 
-// Helper for deterministic UUID generation from numeric strings (e.g. Google id)
-// This strictly preserves the legacy padding mapping to prevent dataset loss.
+// Helper for deterministic UUID generation from ANY string
+// Handles: numeric Google IDs, Korean text IDs, alphanumeric IDs
 function toUUID(id: string): string {
+    // Already a valid UUID → return as-is
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return id;
-    const clean = id.replace(/[^0-9]/g, '');
-    if (clean.length === 0) return id; // Fallback
-    const padded = clean.padStart(32, '0').slice(-32);
-    return `${padded.slice(0, 8)}-${padded.slice(8, 12)}-${padded.slice(12, 16)}-${padded.slice(16, 20)}-${padded.slice(20, 32)}`;
+
+    // For numeric-only strings (phone numbers, Google IDs), use legacy zero-padding
+    const digits = id.replace(/[^0-9]/g, '');
+    if (digits.length > 0 && digits.length === id.length) {
+        const padded = digits.padStart(32, '0').slice(-32);
+        return `${padded.slice(0, 8)}-${padded.slice(8, 12)}-${padded.slice(12, 16)}-${padded.slice(16, 20)}-${padded.slice(20, 32)}`;
+    }
+
+    // For ANY other string (Korean, alphanumeric, mixed): character-code hashing
+    // Generates 32 hex chars deterministically from the string
+    let hex = '';
+    for (let round = 0; hex.length < 32; round++) {
+        let h = 0x811c9dc5 + round; // FNV offset + round salt
+        for (let i = 0; i < id.length; i++) {
+            h ^= id.charCodeAt(i);
+            h = Math.imul(h, 0x01000193); // FNV prime
+        }
+        hex += (h >>> 0).toString(16).padStart(8, '0');
+    }
+    hex = hex.slice(0, 32);
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -33,12 +51,13 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("아이디와 비밀번호를 입력해주세요.");
                 }
 
-                const userId = credentials.id; // Raw ID
+                // CRITICAL: Convert to UUID here so profile lookup matches what signIn stores
+                const userId = toUUID(credentials.id);
                 const name = credentials.name || '작가님';
                 const inputPassword = credentials.password;
 
                 try {
-                    // Fetch existing user
+                    // Fetch existing user by UUID
                     const { data: profile, error } = await supabase
                         .from('profiles')
                         .select('password')
@@ -59,8 +78,8 @@ export const authOptions: NextAuthOptions = {
                     if (profile.password && profile.password !== inputPassword) {
                         throw new Error("등록되지 않은 아이디이거나, 비밀번호가 일치하지 않습니다.");
                     } else if (!profile.password) {
-                        // Profile exists but password was never set (migration / google users signing in via credentials?)
-                        // We will allow this one time and the signIn callback will set it.
+                        // Profile exists but password was never set
+                        // Allow this one time and the signIn callback will set it.
                     }
 
                     return {
@@ -73,7 +92,7 @@ export const authOptions: NextAuthOptions = {
 
                 } catch (err: any) {
                     console.error('Login Authorization failed:', err.message);
-                    throw err; // Proper throwing so NextAuth catches it
+                    throw err;
                 }
             },
         }),
