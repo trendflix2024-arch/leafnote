@@ -34,7 +34,7 @@ function pcmToWav(pcmData: Buffer, sampleRate: number = 24000, numChannels: numb
 
 export async function POST(req: Request) {
     try {
-        const { text } = await req.json();
+        const { text, voice } = await req.json();
 
         if (!text?.trim()) {
             return NextResponse.json({ error: 'No text provided' }, { status: 400 });
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
         ];
 
         // Style instruction helps Gemini produce warmer, more natural Korean prosody
+        const selectedVoice = typeof voice === 'string' && voice.length > 0 ? voice : 'Aoede';
         const styledText = `따뜻하고 자연스러운 한국어 여성 목소리로 읽어주세요:\n\n${cleanText}`;
 
         for (const { name: model, api } of models) {
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
                                 speechConfig: {
                                     voiceConfig: {
                                         prebuiltVoiceConfig: {
-                                            voiceName: 'Aoede',
+                                            voiceName: selectedVoice,
                                         },
                                     },
                                 },

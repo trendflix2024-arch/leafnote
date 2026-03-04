@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useRef } from 'react';
+import { useBookStore } from '@/lib/store';
 
 export function useTTS() {
+    const echoVoice = useBookStore((s) => s.settings.echoVoice || 'Aoede');
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [autoSpeak, setAutoSpeak] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +27,7 @@ export function useTTS() {
             const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, voice: echoVoice }),
             });
 
             if (!response.ok) {

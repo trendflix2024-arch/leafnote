@@ -2,15 +2,47 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { ArrowLeft, Bell, Shield, Monitor, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Bell, Shield, Monitor, Trash2, Mic2, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBookStore } from "@/lib/store";
+
+const ECHO_VOICES = [
+    { id: 'Aoede', label: '따뜻한 에코', desc: '포근하고 부드러운 목소리 (기본)' },
+    { id: 'Kore',  label: '맑은 에코',   desc: '또렷하고 차분한 목소리' },
+    { id: 'Zephyr', label: '상쾌한 에코', desc: '밝고 활기찬 목소리' },
+    { id: 'Puck',  label: '발랄한 에코', desc: '경쾌하고 친근한 목소리' },
+];
 
 export default function SettingsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const { settings, updateSettings, resetAll } = useBookStore();
+    const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+
+    const handleVoicePreview = async (voiceId: string) => {
+        if (previewingVoice) return;
+        setPreviewingVoice(voiceId);
+        try {
+            const res = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: '안녕하세요, 저는 에코예요. 작가님의 소중한 이야기를 기다리고 있어요.', voice: voiceId }),
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.audioContent) {
+                const audio = new Audio(`data:${data.mimeType};base64,${data.audioContent}`);
+                audio.onended = () => setPreviewingVoice(null);
+                audio.onerror = () => setPreviewingVoice(null);
+                await audio.play();
+            } else {
+                setPreviewingVoice(null);
+            }
+        } catch {
+            setPreviewingVoice(null);
+        }
+    };
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -102,6 +134,58 @@ export default function SettingsPage() {
                             >
                                 <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${settings.darkMode ? 'left-8' : 'left-1'}`} />
                             </button>
+                        </div>
+                    </section>
+
+                    {/* 에코 목소리 설정 */}
+                    <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-emerald-900/5 border border-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/40 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                        <h2 className="text-lg font-bold text-slate-800 font-serif mb-2 flex items-center gap-3 relative z-10">
+                            <div className="p-2 bg-emerald-100/50 rounded-xl text-emerald-600">
+                                <Mic2 className="w-5 h-5" />
+                            </div>
+                            에코 목소리
+                        </h2>
+                        <p className="text-sm text-slate-400 font-medium mb-6 relative z-10">에코가 이야기를 읽어줄 때 사용할 목소리를 선택하세요.</p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
+                            {ECHO_VOICES.map((voice) => {
+                                const isSelected = (settings.echoVoice || 'Aoede') === voice.id;
+                                const isPreviewing = previewingVoice === voice.id;
+                                return (
+                                    <button
+                                        key={voice.id}
+                                        onClick={() => updateSettings({ echoVoice: voice.id })}
+                                        className={`flex items-center justify-between p-4 rounded-2xl border-2 text-left transition-all ${
+                                            isSelected
+                                                ? 'border-emerald-500 bg-emerald-50'
+                                                : 'border-slate-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/30'
+                                        }`}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`font-bold text-sm ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
+                                                {voice.label}
+                                                {isSelected && <span className="ml-2 text-[10px] font-bold text-emerald-500 bg-emerald-100 px-2 py-0.5 rounded-full">선택됨</span>}
+                                            </p>
+                                            <p className="text-xs text-slate-400 mt-0.5">{voice.desc}</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleVoicePreview(voice.id); }}
+                                            disabled={!!previewingVoice}
+                                            className={`ml-3 w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                                                isPreviewing
+                                                    ? 'bg-emerald-500 text-white animate-pulse'
+                                                    : 'bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'
+                                            }`}
+                                        >
+                                            {isPreviewing
+                                                ? <Loader2 size={14} className="animate-spin" />
+                                                : <Play size={12} className="ml-0.5" />
+                                            }
+                                        </button>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </section>
 

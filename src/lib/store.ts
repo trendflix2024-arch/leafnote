@@ -43,6 +43,7 @@ interface AppSettings {
   notifications: boolean;
   darkMode: boolean;
   fontSize: number;
+  echoVoice: string;
 }
 
 interface BookStore {
@@ -140,6 +141,7 @@ export const useBookStore = create<BookStore>()(
         notifications: true,
         darkMode: false,
         fontSize: 24,
+        echoVoice: 'Aoede',
       },
       chatHistory: [],
       isSyncing: false,
