@@ -57,16 +57,22 @@ export const authOptions: NextAuthOptions = {
                 // Mark as new user if no profile found (for Google first-timers)
                 (user as any).isNewUser = !existing;
 
-                const payload: any = {
-                    id: userId,
-                    name: user.name || '작가님',
-                    email: user.email || '',
-                    updated_at: new Date().toISOString(),
-                };
-
-                const { error } = await supabase
-                    .from('profiles')
-                    .upsert(payload, { onConflict: 'id' });
+                let error;
+                if (!existing) {
+                    // New user: create profile with Google name
+                    ({ error } = await supabase.from('profiles').insert({
+                        id: userId,
+                        name: user.name || '작가님',
+                        email: user.email || '',
+                        updated_at: new Date().toISOString(),
+                    }));
+                } else {
+                    // Existing user: preserve custom name, only update email/timestamp
+                    ({ error } = await supabase.from('profiles').update({
+                        email: user.email || '',
+                        updated_at: new Date().toISOString(),
+                    }).eq('id', userId));
+                }
 
                 if (error) console.error('Supabase signIn sync error:', error);
             } catch (err) {
