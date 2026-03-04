@@ -42,15 +42,50 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("아이디와 비밀번호를 입력해주세요.");
                 }
 
-                // In this simplified version, we accept the password as is.
                 const userId = toUUID(credentials.id);
                 const name = credentials.name || '작가님';
+                const inputPassword = credentials.password;
+
+                try {
+                    // Try to fetch existing user
+                    const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select('password')
+                        .eq('id', userId)
+                        .maybeSingle();
+
+                    if (error && error.code !== 'PGRST116') {
+                        console.error('Auth check error:', error);
+                        throw new Error("서버 오류가 발생했습니다.");
+                    }
+
+                    if (profile) {
+                        // User exists, verify password
+                        if (profile.password && profile.password !== inputPassword) {
+                            throw new Error("비밀번호가 일치하지 않습니다.");
+                        } else if (!profile.password) {
+                            // Migration case: user exists but never had a password set
+                            // We allow them in, and the signIn callback will save this password
+                            console.log('User has no password, accepting and will set it.');
+                        }
+                    }
+                    // If profile doesn't exist, it's a new registration, allow and create later.
+                } catch (err: any) {
+                    if (err.message === "비밀번호가 일치하지 않습니다.") {
+                        throw err;
+                    }
+                    console.error('Supabase query failed during auth:', err);
+                    // If the 'password' column doesn't exist yet, the query will fail.
+                    // For safety during deployment, if it fails, we fall back to accepting the login
+                    // so we don't lock everyone out, but we still log it.
+                }
 
                 return {
                     id: userId,
                     name: name,
                     email: `${credentials.id}@leafnote.ai`,
                     idPlain: credentials.id,
+                    password: inputPassword // Passing this to the token so the signIn callback can save it
                 };
             },
         }),
@@ -65,17 +100,26 @@ export const authOptions: NextAuthOptions = {
 
             const userId = toUUID(user.id);
             const loginId = (user as any).idPlain || user.id;
+            const password = (user as any).password; // From authorize callback
 
             try {
+                // Prepare upsert payload. If we successfully authorized, we should save the password
+                // if it was provided (for new accounts or migrations).
+                const payload: any = {
+                    id: userId,
+                    name: user.name || '작가님',
+                    email: user.email || '',
+                    phone: loginId,
+                    updated_at: new Date().toISOString(),
+                };
+
+                if (password) {
+                    payload.password = password;
+                }
+
                 const { error } = await supabase
                     .from('profiles')
-                    .upsert({
-                        id: userId,
-                        name: user.name || '작가님',
-                        email: user.email || '',
-                        phone: loginId,
-                        updated_at: new Date().toISOString(),
-                    }, { onConflict: 'id' });
+                    .upsert(payload, { onConflict: 'id' });
 
                 if (error) console.error('Supabase sync error:', error);
             } catch (err) {
