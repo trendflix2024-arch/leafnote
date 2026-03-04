@@ -53,29 +53,33 @@ export async function POST(req: Request) {
             .trim()
             .substring(0, 4000);
 
-        // Use Gemini 1.5 Flash TTS
+        // Use Gemini dedicated TTS models (v1beta) for natural Korean voice
         const models = [
-            'gemini-2.5-flash-8b-latest',
-            'gemini-2.5-flash',
+            { name: 'gemini-2.5-flash-preview-tts', api: 'v1beta' },
+            { name: 'gemini-2.5-flash', api: 'v1beta' },
+            { name: 'gemini-2.0-flash-exp', api: 'v1beta' },
         ];
 
-        for (const model of models) {
+        // Style instruction helps Gemini produce warmer, more natural Korean prosody
+        const styledText = `따뜻하고 자연스러운 한국어 여성 목소리로 읽어주세요:\n\n${cleanText}`;
+
+        for (const { name: model, api } of models) {
             try {
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/${api}/models/${model}:generateContent?key=${apiKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{
-                                parts: [{ text: cleanText }],
+                                parts: [{ text: styledText }],
                             }],
                             generationConfig: {
                                 responseModalities: ['AUDIO'],
                                 speechConfig: {
                                     voiceConfig: {
                                         prebuiltVoiceConfig: {
-                                            voiceName: 'Kore',
+                                            voiceName: 'Aoede',
                                         },
                                     },
                                 },
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
                     });
                 }
             } catch (modelError: any) {
-                console.warn(`TTS model ${model} error:`, modelError.message?.substring(0, 100));
+                console.warn(`TTS model ${model} error:`, modelError.message?.substring(0, 100) ?? String(modelError));
                 continue;
             }
         }
