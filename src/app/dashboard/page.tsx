@@ -301,8 +301,8 @@ export default function DashboardPage() {
                         <h1 className="text-base sm:text-2xl font-serif font-bold text-slate-800 group-hover:text-emerald-700 transition-colors whitespace-nowrap">리프노트 <span className="text-emerald-600 text-[10px] sm:text-lg ml-0.5 sm:ml-1 font-sans">LeafNote</span></h1>
                     </Link>
 
-                    {/* Desktop Navigation - hidden on mobile/tablet */}
-                    <nav className="hidden lg:flex items-center gap-6 ml-8">
+                    {/* Desktop Navigation - hidden on mobile */}
+                    <nav className="hidden md:flex items-center gap-6 ml-8">
                         <Link href="/dashboard" className="text-sm font-bold text-emerald-600 border-b-2 border-emerald-600 pb-1">나의 숲</Link>
                         <Link href="/chat" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-1">
                             <MessageCircle size={16} /> 에코와 대화
@@ -795,7 +795,7 @@ export default function DashboardPage() {
             </main>
 
             {/* Mobile Bottom Navigation - Improved Visibility */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-50 h-16 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-50 h-16 safe-area-pb shadow-[-0px_-4px_20px_rgba(0,0,0,0.03)]">
                 <div className="flex items-center justify-around h-14">
                     <Link href="/dashboard" className="flex flex-col items-center gap-0.5 py-1.5 px-4 text-emerald-600">
                         <TreePine size={20} />
