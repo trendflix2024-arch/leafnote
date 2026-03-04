@@ -544,7 +544,7 @@ export const useBookStore = create<BookStore>()(
         }
       },
 
-      resetAll: () => set({ projects: [], currentProjectId: null, userProfile: null, tempOnboardingData: null, chatHistory: [] }),
+      resetAll: () => set((state) => ({ projects: [], currentProjectId: null, userProfile: null, tempOnboardingData: state.tempOnboardingData, chatHistory: [] })),
     }),
     {
       name: 'leafnote-storage-v1', // Rebranded storage key
