@@ -37,18 +37,17 @@ export const authOptions: NextAuthOptions = {
 
                     if (error) {
                         console.error('Auth verification query error:', error);
-                        throw new Error("서버 통신 오류가 발생했습니다.");
+                        throw new Error("서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.");
                     }
 
                     if (!profile) {
-                        // Profile does not exist at all -> We can create it via signIn OR block it.
-                        // I will block it so we don't allow arbitrary ID creations from the login box.
-                        throw new Error("존재하지 않는 사용자 아이디입니다.");
+                        // Profile does not exist at all
+                        throw new Error("등록되지 않은 아이디이거나, 비밀번호가 일치하지 않습니다.");
                     }
 
                     // Profile exists, check password
                     if (profile.password && profile.password !== inputPassword) {
-                        throw new Error("비밀번호가 일치하지 않습니다.");
+                        throw new Error("등록되지 않은 아이디이거나, 비밀번호가 일치하지 않습니다.");
                     } else if (!profile.password) {
                         // Profile exists but password was never set (migration / google users signing in via credentials?)
                         // We will allow this one time and the signIn callback will set it.

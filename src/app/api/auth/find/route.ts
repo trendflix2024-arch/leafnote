@@ -19,11 +19,11 @@ export async function POST(request: Request) {
 
             if (error) {
                 console.error('Find ID error:', error);
-                return NextResponse.json({ error: '조회 중 오류가 발생했습니다.' }, { status: 500 });
+                return NextResponse.json({ error: '조회 중 오류가 발생했습니다. 잠시 후 서버가 안정되면 다시 시도해주세요.' }, { status: 500 });
             }
 
             if (!data || data.length === 0) {
-                return NextResponse.json({ error: '해당 성함으로 등록된 계정이 없습니다.' }, { status: 404 });
+                return NextResponse.json({ error: '앗, 입력하신 성함으로 등록된 작가님을 찾을 수 없어요. 성함을 다시 한번 확인해주시겠어요?' }, { status: 404 });
             }
 
             // Mask the IDs for privacy (show first 2 chars + ***)
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
             });
 
             return NextResponse.json({
-                message: `${name}님의 계정을 찾았습니다.`,
+                message: `반갑습니다, ${name} 작가님!\n등록된 아이디는 아래와 같습니다.`,
                 ids: maskedIds
             });
 
@@ -52,12 +52,22 @@ export async function POST(request: Request) {
                 .single();
 
             if (error || !data) {
-                return NextResponse.json({ error: '해당 아이디로 등록된 계정이 없습니다.' }, { status: 404 });
+                return NextResponse.json({ error: '앗, 입력하신 아이디로 등록된 계정을 찾을 수 없어요. 아이디를 정확하게 입력하셨는지 확인해주세요!' }, { status: 404 });
             }
 
-            // In this simplified system, we don't store passwords, so just confirm the account exists
+            // Clear password in Supabase so the next login sets it anew
+            const { error: resetError } = await supabase
+                .from('profiles')
+                .update({ password: null })
+                .eq('phone', id);
+
+            if (resetError) {
+                console.error('Password reset error:', resetError);
+                return NextResponse.json({ error: '비밀번호 초기화 중 문제가 발생했습니다. (서버 오류)' }, { status: 500 });
+            }
+
             return NextResponse.json({
-                message: `${data.name || '작가'}님의 비밀번호가 초기화되었습니다. 새로운 비밀번호로 로그인해주세요.`,
+                message: `${data.name || '작가'}님의 비밀번호가 성공적으로 초기화되었습니다.\n이제 원하시는 '새로운 비밀번호'로 다시 로그인하시면, 해당 비밀번호가 영구적으로 새롭게 저장됩니다!`,
                 success: true
             });
 
