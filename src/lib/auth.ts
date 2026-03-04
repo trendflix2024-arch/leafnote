@@ -110,6 +110,16 @@ export const authOptions: NextAuthOptions = {
             const password = (user as any).password;
 
             try {
+                // Check if this user already exists in Supabase
+                const { data: existing } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                // Mark as new user if no profile found (for Google first-timers)
+                (user as any).isNewUser = !existing && account?.provider === 'google';
+
                 const payload: any = {
                     id: userId,
                     name: user.name || '작가님',
@@ -137,6 +147,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = toUUID(user.id);
                 token.loginId = (user as any).idPlain || user.id;
+                token.isNewUser = (user as any).isNewUser || false;
             }
             return token;
         },
@@ -144,6 +155,7 @@ export const authOptions: NextAuthOptions = {
             if (token && session.user) {
                 (session.user as any).id = token.id;
                 (session.user as any).loginId = token.loginId;
+                (session.user as any).isNewUser = token.isNewUser || false;
             }
             return session;
         },

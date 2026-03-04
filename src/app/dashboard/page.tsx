@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
@@ -113,6 +113,28 @@ export default function DashboardPage() {
     const [selectedTone, setSelectedTone] = useState('서정적인');
     const [showCompost, setShowCompost] = useState(false);
 
+    // Author name prompt for first-time Google login users
+    const [showNamePrompt, setShowNamePrompt] = useState(false);
+    const [authorName, setAuthorName] = useState('');
+    const { updateUserProfile } = useBookStore();
+
+    useEffect(() => {
+        if (session && (session.user as any)?.isNewUser && !showNamePrompt) {
+            setShowNamePrompt(true);
+            setAuthorName('');
+        }
+    }, [session]);
+
+    const handleNameSubmit = async () => {
+        const finalName = authorName.trim() || '작가님';
+        setUserProfile({
+            ...(userProfile || { id: '', email: '', name: '' }),
+            name: finalName,
+        });
+        await updateUserProfile({ name: finalName });
+        setShowNamePrompt(false);
+    };
+
     // AI Subject Suggestions
     const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
     const [isSuggesting, setIsSuggesting] = useState(false);
@@ -212,6 +234,54 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-[#faf9f6]">
+            {/* Author Name Prompt Modal for First-Time Google Users */}
+            <AnimatePresence>
+                {showNamePrompt && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-gradient-to-br from-emerald-50 via-amber-50 to-white flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.85, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.85, opacity: 0, y: 30 }}
+                            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+                            className="bg-white rounded-3xl shadow-2xl border border-emerald-100 max-w-md w-full p-8 text-center"
+                        >
+                            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                                <Leaf className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h2 className="text-2xl font-serif font-bold text-slate-800 mb-2">
+                                환영합니다! 🎉
+                            </h2>
+                            <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                                리프노트에서 사용하실<br />
+                                <span className="font-semibold text-emerald-700">작가명(필명)</span>을 정해주세요.
+                            </p>
+                            <input
+                                type="text"
+                                value={authorName}
+                                onChange={(e) => setAuthorName(e.target.value)}
+                                placeholder="예: 김잎새, 순풍작가, 별빛엄마"
+                                className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-center text-lg font-serif placeholder:text-slate-300 transition-all"
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+                            />
+                            <button
+                                onClick={handleNameSubmit}
+                                className="mt-5 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 active:scale-[0.98]"
+                            >
+                                이 이름으로 시작하기 ✨
+                            </button>
+                            <p className="text-xs text-slate-400 mt-3">
+                                나중에 프로필 설정에서 변경할 수 있어요.
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Top Bar - Mobile Optimized */}
             <header className="bg-white border-b sticky top-0 z-20">
                 <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4 flex justify-between items-center">
