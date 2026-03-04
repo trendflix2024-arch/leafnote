@@ -20,8 +20,8 @@ export function useInterview(options?: UseInterviewOptions) {
     const [messages, setMessages] = useState<Message[]>(() => {
         if (!currentProject) return [];
         return currentProject.interviewData.flatMap(step => [
+            { role: 'user', content: step.answer },
             { role: 'assistant', content: step.question },
-            { role: 'user', content: step.answer }
         ]);
     });
 
