@@ -2,38 +2,79 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowLeft, User, Mail, Camera, Save, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, User, Mail, Camera, Save, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBookStore } from "@/lib/store";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Compress and crop image to a square JPEG ≤ 200×200px
+function compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onerror = reject;
+            img.onload = () => {
+                const SIZE = 200;
+                const canvas = document.createElement('canvas');
+                canvas.width = SIZE;
+                canvas.height = SIZE;
+                const ctx = canvas.getContext('2d')!;
+                const min = Math.min(img.width, img.height);
+                const sx = (img.width - min) / 2;
+                const sy = (img.height - min) / 2;
+                ctx.drawImage(img, sx, sy, min, min, 0, 0, SIZE, SIZE);
+                resolve(canvas.toDataURL('image/jpeg', 0.75));
+            };
+            img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const { userProfile, updateUserProfile } = useBookStore();
     const [name, setName] = useState('');
+    const [avatar, setAvatar] = useState<string | undefined>(undefined);
     const [isSaving, setIsSaving] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/login');
-        }
+        if (status === 'unauthenticated') router.push('/login');
     }, [status, router]);
 
     useEffect(() => {
-        if (userProfile?.name) {
-            setName(userProfile.name);
-        } else if (session?.user?.name) {
-            setName(session.user.name);
-        }
+        if (userProfile?.name) setName(userProfile.name);
+        else if (session?.user?.name) setName(session.user.name);
+
+        if (userProfile?.avatar) setAvatar(userProfile.avatar);
+        else if (session?.user?.image) setAvatar(session.user.image);
     }, [userProfile, session]);
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const compressed = await compressImage(file);
+            setAvatar(compressed);
+        } catch {
+            console.error('Image compression failed');
+        }
+        // Reset so same file can be re-selected
+        e.target.value = '';
+    };
 
     const handleSave = async () => {
         if (!name.trim()) return;
         setIsSaving(true);
         try {
-            await updateUserProfile({ name: name.trim() });
-            alert('프로필 정보가 저장되었습니다.');
+            await updateUserProfile({ name: name.trim(), avatar });
+            setShowSuccess(true);
         } catch (error) {
             console.error('Failed to save profile:', error);
             alert('저장에 실패했습니다. 다시 시도해 주세요.');
@@ -52,6 +93,38 @@ export default function ProfilePage() {
 
     return (
         <div className="min-h-screen bg-[#faf9f6] paper-texture flex flex-col items-center relative overflow-hidden isolate">
+            {/* Success Modal */}
+            <AnimatePresence>
+                {showSuccess && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+                            className="bg-white rounded-3xl p-8 max-w-xs w-full shadow-2xl border border-emerald-100 text-center"
+                        >
+                            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-xl font-bold font-serif text-slate-800 mb-2">저장 완료!</h3>
+                            <p className="text-sm text-slate-500 mb-6">프로필이 성공적으로 저장되었습니다.</p>
+                            <Button
+                                onClick={() => router.push('/dashboard')}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-12 font-bold"
+                            >
+                                확인
+                            </Button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Background Decorative Blur */}
             <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-emerald-100/40 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-amber-50/50 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
@@ -75,14 +148,24 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-2xl shadow-emerald-900/5 border border-white flex flex-col items-center relative overflow-hidden">
-                    {/* Inner Decorative Elements */}
                     <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-emerald-50/80 to-transparent pointer-events-none"></div>
 
                     <div className="relative z-10 w-full flex flex-col items-center">
-                        <div className="relative group cursor-pointer mb-8 md:mb-12">
+                        {/* Avatar Upload */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageChange}
+                        />
+                        <div
+                            className="relative group cursor-pointer mb-8 md:mb-12"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
                             <div className="w-28 h-28 md:w-36 md:h-36 bg-slate-50 rounded-full border-[6px] border-white shadow-xl shadow-slate-200/50 overflow-hidden flex items-center justify-center relative z-10">
-                                {session.user?.image ? (
-                                    <img src={session.user.image} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                {avatar ? (
+                                    <img src={avatar} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                 ) : (
                                     <User className="w-14 h-14 text-slate-300" />
                                 )}
@@ -96,6 +179,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         </div>
+                        <p className="text-xs text-slate-400 -mt-6 mb-8 font-medium">사진을 클릭하여 변경하세요</p>
 
                         <div className="w-full space-y-8 max-w-sm">
                             <div className="space-y-3">
@@ -106,6 +190,7 @@ export default function ProfilePage() {
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                                     className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all text-slate-800 font-bold shadow-sm placeholder:text-slate-300"
                                     placeholder="기록될 이름을 적어주세요"
                                 />
