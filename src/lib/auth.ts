@@ -4,6 +4,16 @@ import GoogleProvider from "next-auth/providers/google";
 import { supabase } from "@/lib/supabase";
 import type { NextAuthOptions } from "next-auth";
 
+// Helper for deterministic UUID generation from numeric strings (e.g. Google id)
+// This strictly preserves the legacy padding mapping to prevent dataset loss.
+function toUUID(id: string): string {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return id;
+    const clean = id.replace(/[^0-9]/g, '');
+    if (clean.length === 0) return id; // Fallback
+    const padded = clean.padStart(32, '0').slice(-32);
+    return `${padded.slice(0, 8)}-${padded.slice(8, 12)}-${padded.slice(12, 16)}-${padded.slice(16, 20)}-${padded.slice(20, 32)}`;
+}
+
 export const authOptions: NextAuthOptions = {
     providers: [
         GoogleProvider({
@@ -76,7 +86,7 @@ export const authOptions: NextAuthOptions = {
         async signIn({ user, account }) {
             if (!user?.id) return true;
 
-            const userId = user.id; // Use raw string ID
+            const userId = toUUID(user.id);
             const loginId = (user as any).idPlain || user.id;
             const password = (user as any).password;
 
@@ -106,7 +116,7 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) {
-                token.id = user.id;
+                token.id = toUUID(user.id);
                 token.loginId = (user as any).idPlain || user.id;
             }
             return token;
