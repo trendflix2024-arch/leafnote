@@ -27,7 +27,11 @@ export const config = {
         "/profile",
         "/settings/:path*",
         "/settings",
-        "/onboarding/:path*",
-        "/onboarding",
+        "/chat/:path*",
+        "/chat",
+        "/design/:path*",
+        "/design",
+        "/export/:path*",
+        "/export",
     ],
 };
