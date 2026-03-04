@@ -76,6 +76,7 @@ interface BookStore {
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   updateSettings: (updates: Partial<AppSettings>) => void;
   addChatMessage: (role: 'user' | 'assistant', content: string) => Promise<void>;
+  persistChatMessage: (role: 'user' | 'assistant', content: string, timestamp: number) => Promise<void>;
   setChatHistory: (history: ChatMessage[]) => void;
   setTempOnboardingData: (data: { name: string; topic: string; tone: string } | null) => void;
   tempOnboardingData: { name: string; topic: string; tone: string } | null;
@@ -480,6 +481,9 @@ export const useBookStore = create<BookStore>()(
           chatHistory: [...state.chatHistory, newMessage]
         }));
 
+        // Skip DB insert for empty streaming placeholders — call persistChatMessage after streaming
+        if (!content) return;
+
         const userId = get().userProfile?.id;
         if (userId) {
           try {
@@ -492,6 +496,21 @@ export const useBookStore = create<BookStore>()(
           } catch (e) {
             console.error('Failed to sync chat to Supabase:', e);
           }
+        }
+      },
+
+      persistChatMessage: async (role, content, timestamp) => {
+        const userId = get().userProfile?.id;
+        if (!userId || !content) return;
+        try {
+          await supabase.from('chat_messages').insert({
+            user_id: userId,
+            role,
+            content,
+            timestamp: new Date(timestamp).toISOString()
+          });
+        } catch (e) {
+          console.error('Failed to persist chat message:', e);
         }
       },
 

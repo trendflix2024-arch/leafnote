@@ -11,7 +11,7 @@ import Link from 'next/link';
 export default function ChatPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { chatHistory, addChatMessage, projects, userProfile, setChatHistory } = useBookStore();
+    const { chatHistory, addChatMessage, persistChatMessage, projects, userProfile, setChatHistory } = useBookStore();
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -68,6 +68,7 @@ export default function ChatPage() {
                         const reader = res.body?.getReader();
                         const decoder = new TextDecoder();
                         let assistantContent = '';
+                        const placeholderTs = Date.now();
 
                         addChatMessage('assistant', '');
 
@@ -89,6 +90,9 @@ export default function ChatPage() {
                                 });
                             }
                         }
+
+                        // Persist final content to DB after streaming
+                        await persistChatMessage('assistant', assistantContent, placeholderTs);
                     }
                 } catch (error) {
                     console.error("Failed to get greeting:", error);
@@ -142,6 +146,7 @@ export default function ChatPage() {
                 const reader = res.body?.getReader();
                 const decoder = new TextDecoder();
                 let assistantContent = '';
+                const placeholderTs = Date.now();
 
                 addChatMessage('assistant', '');
 
@@ -163,6 +168,9 @@ export default function ChatPage() {
                         });
                     }
                 }
+
+                // Persist final content to DB after streaming
+                await persistChatMessage('assistant', assistantContent, placeholderTs);
             }
         } catch (error) {
             console.error("Chat error:", error);
