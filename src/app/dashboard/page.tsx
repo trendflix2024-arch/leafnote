@@ -22,7 +22,7 @@ function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
 
     const hasStories = activeProjects.length > 0;
     // Mock data for "latest story keyword"
-    const latestKeyword = hasStories ? (stripNamePrefix(activeProjects[0].title).split(' ')[0] || '최근') : '';
+    const latestKeyword = hasStories ? (stripNamePrefix(activeProjects[0].title) || '최근') : '';
 
     return (
         <AnimatePresence>
