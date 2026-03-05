@@ -1,9 +1,9 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bell, Shield, Monitor, Trash2, Mic2, Play, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, Shield, Monitor, Trash2, Mic2, Play, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBookStore } from "@/lib/store";
 
@@ -19,6 +19,9 @@ export default function SettingsPage() {
     const router = useRouter();
     const { settings, updateSettings, resetAll } = useBookStore();
     const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteInput, setDeleteInput] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleVoicePreview = async (voiceId: string) => {
         if (previewingVoice) return;
@@ -58,14 +61,71 @@ export default function SettingsPage() {
         );
     }
 
-    const handleDeleteAccount = () => {
-        if (confirm('정말로 계정을 삭제하시겠습니까? 기록된 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.')) {
-            alert('데모 환경에서는 계정 삭제가 제한되어 있습니다.');
+    const handleDeleteAccount = async () => {
+        if (deleteInput !== '탈퇴') return;
+        setIsDeleting(true);
+        try {
+            const res = await fetch('/api/account', { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json();
+                alert(data.error || '탈퇴 중 오류가 발생했습니다.');
+                setIsDeleting(false);
+                return;
+            }
+            resetAll();
+            await signOut({ callbackUrl: '/' });
+        } catch {
+            alert('탈퇴 중 오류가 발생했습니다.');
+            setIsDeleting(false);
         }
     };
 
     return (
         <div className="min-h-screen bg-[#faf9f6] paper-texture flex flex-col items-center relative overflow-hidden isolate">
+
+            {/* 탈퇴 확인 모달 */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full space-y-6">
+                        <div className="flex flex-col items-center gap-3 text-center">
+                            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center">
+                                <AlertTriangle className="w-7 h-7 text-red-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-800 font-serif">정말 탈퇴하시겠습니까?</h2>
+                            <p className="text-sm text-slate-500 font-serif leading-relaxed">
+                                계정과 모든 기록이 <span className="text-red-500 font-bold">영구적으로 삭제</span>되며 복구할 수 없습니다.
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-xs font-bold text-slate-600 text-center">확인을 위해 아래에 <span className="text-red-500">'탈퇴'</span>를 입력하세요.</p>
+                            <input
+                                type="text"
+                                value={deleteInput}
+                                onChange={(e) => setDeleteInput(e.target.value)}
+                                placeholder="탈퇴"
+                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-center font-bold text-slate-800 focus:border-red-400 focus:outline-none"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteInput !== '탈퇴' || isDeleting}
+                                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                탈퇴하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Background Decorative Blur */}
             <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-emerald-100/40 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-amber-50/50 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
@@ -208,7 +268,7 @@ export default function SettingsPage() {
                             </button>
                             <div className="h-px w-full bg-slate-100 my-4"></div>
                             <button
-                                onClick={handleDeleteAccount}
+                                onClick={() => { setShowDeleteConfirm(true); setDeleteInput(''); }}
                                 className="w-full py-4 px-4 font-bold text-red-500 hover:bg-red-50 rounded-xl flex items-center justify-between transition-all group"
                             >
                                 계정 회원탈퇴 및 기록 영구 삭제
