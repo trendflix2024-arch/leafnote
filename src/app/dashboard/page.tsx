@@ -308,7 +308,7 @@ export default function DashboardPage() {
                             <MessageCircle size={16} /> 에코와 대화
                         </Link>
                         <Link href="/community" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-1">
-                            <Users size={16} /> 커뮤니티
+                            <Users size={16} /> 이야기 숲
                         </Link>
                     </nav>
 
@@ -810,7 +810,7 @@ export default function DashboardPage() {
                     </Link>
                     <Link href="/community" className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
                         <Users size={20} />
-                        <span className="text-[10px] font-bold">커뮤니티</span>
+                        <span className="text-[10px] font-bold">이야기 숲</span>
                     </Link>
                     <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
                         <UserCircle size={20} />

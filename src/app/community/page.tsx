@@ -248,8 +248,8 @@ export default function CommunityPage() {
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div className="flex-1">
-                        <h1 className="text-lg font-serif font-bold text-slate-800">리프노트 커뮤니티</h1>
-                        <p className="text-xs text-slate-400">작가들의 이야기가 모이는 곳</p>
+                        <h1 className="text-lg font-serif font-bold text-slate-800">이야기 숲</h1>
+                        <p className="text-xs text-slate-400">작가들의 이야기가 피어나는 공간</p>
                     </div>
                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-full">
                         <Sparkles size={13} className="text-emerald-600" />
@@ -331,7 +331,7 @@ export default function CommunityPage() {
                 {/* CTA */}
                 <div className="mt-8 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-6 text-center text-white">
                     <p className="font-serif font-bold text-lg mb-1">나의 이야기도 공유해볼까요?</p>
-                    <p className="text-sm text-emerald-100 mb-4">에코와 함께 쓴 이야기를 커뮤니티에 공개할 수 있어요</p>
+                    <p className="text-sm text-emerald-100 mb-4">에코와 함께 쓴 이야기를 이야기 숲에 공개할 수 있어요</p>
                     <Button
                         onClick={() => router.push("/dashboard")}
                         className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-full px-6"
