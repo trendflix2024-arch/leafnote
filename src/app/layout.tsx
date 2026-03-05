@@ -4,6 +4,7 @@ import { Providers } from "@/components/Providers";
 import { SessionWatcher } from "@/components/SessionWatcher";
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://leafnote.co.kr'),
     title: "리프노트 LeafNote - 베타 초대장",
     description: "작가님을 오래 기다렸습니다. 리프노트 베타 창립 멤버로 참여하세요. 베타 기간 동안 초고 생성·커버 디자인·PDF 다운로드를 무제한 무료로 사용하실 수 있습니다.",
     keywords: ["리프노트", "LeafNote", "베타 초대", "인생 기록", "AI 인터뷰", "개인 출판", "자서전", "부모님 선물"],
