@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
@@ -306,6 +306,9 @@ export default function DashboardPage() {
                         <Link href="/dashboard" className="text-sm font-bold text-emerald-600 border-b-2 border-emerald-600 pb-1">나의 숲</Link>
                         <Link href="/chat" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-1">
                             <MessageCircle size={16} /> 에코와 대화
+                        </Link>
+                        <Link href="/community" className="text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-1">
+                            <Users size={16} /> 커뮤니티
                         </Link>
                     </nav>
 
@@ -797,19 +800,23 @@ export default function DashboardPage() {
             {/* Mobile Bottom Navigation - Improved Visibility */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-50 h-16 safe-area-pb shadow-[-0px_-4px_20px_rgba(0,0,0,0.03)]">
                 <div className="flex items-center justify-around h-14">
-                    <Link href="/dashboard" className="flex flex-col items-center gap-0.5 py-1.5 px-4 text-emerald-600">
+                    <Link href="/dashboard" className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-emerald-600">
                         <TreePine size={20} />
                         <span className="text-[10px] font-bold">나의 숲</span>
                     </Link>
-                    <Link href="/chat" className="flex flex-col items-center gap-0.5 py-1.5 px-4 text-slate-400 hover:text-emerald-600 transition-colors">
+                    <Link href="/chat" className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
                         <MessageCircle size={20} />
                         <span className="text-[10px] font-bold">에코와 대화</span>
                     </Link>
-                    <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 py-1.5 px-4 text-slate-400 hover:text-emerald-600 transition-colors">
+                    <Link href="/community" className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
+                        <Users size={20} />
+                        <span className="text-[10px] font-bold">커뮤니티</span>
+                    </Link>
+                    <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
                         <UserCircle size={20} />
                         <span className="text-[10px] font-bold">프로필</span>
                     </button>
-                    <button onClick={() => router.push('/settings')} className="flex flex-col items-center gap-0.5 py-1.5 px-4 text-slate-400 hover:text-emerald-600 transition-colors">
+                    <button onClick={() => router.push('/settings')} className="flex flex-col items-center gap-0.5 py-1.5 px-3 text-slate-400 hover:text-emerald-600 transition-colors">
                         <Settings size={20} />
                         <span className="text-[10px] font-bold">설정</span>
                     </button>
