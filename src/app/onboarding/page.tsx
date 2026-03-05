@@ -38,7 +38,7 @@ export default function OnboardingPage() {
     const [selectedTopic, setSelectedTopic] = useState('');
     const [selectedTone, setSelectedTone] = useState('');
     const [customTopic, setCustomTopic] = useState('');
-    const { setTempOnboardingData, userProfile } = useBookStore();
+    const { setTempOnboardingData, userProfile, updateUserProfile } = useBookStore();
 
     // 세션 로딩 완료 후 초기 step 결정 (flash 방지)
     useEffect(() => {
@@ -84,12 +84,17 @@ export default function OnboardingPage() {
         }
     }, [step, hasSuggested]);
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         const topicLabel = selectedTopic === 'custom' ? customTopic : (TOPICS.find((t) => t.id === selectedTopic)?.label || selectedTopic);
         const toneLabel = TONES.find((t) => t.id === selectedTone)?.label || selectedTone;
 
         // Store onboarding data temporarily
         setTempOnboardingData({ name, topic: topicLabel, tone: toneLabel });
+
+        // Persist author name to profile if logged in and name was entered
+        if (session && name.trim()) {
+            await updateUserProfile({ name: name.trim() });
+        }
 
         // Redirect to interview if logged in, otherwise to login
         if (session) {
