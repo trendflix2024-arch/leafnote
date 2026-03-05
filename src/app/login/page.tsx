@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sparkles, Leaf, ExternalLink, Copy, Check } from 'lucide-react';
+import { Sparkles, Leaf, Copy, Check } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 
 function isInAppBrowser(): boolean {
@@ -13,6 +13,17 @@ function isInAppBrowser(): boolean {
     return ua.includes('kakaotalk') || ua.includes('kakaomini') ||
         ua.includes('line/') || ua.includes('instagram') ||
         ua.includes('fbav') || ua.includes('fban');
+}
+
+function KakaoIcon({ size = 20 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <path
+                d="M12 3C6.477 3 2 6.477 2 10.8c0 2.717 1.742 5.1 4.373 6.49L5.25 21l4.628-2.45A11.6 11.6 0 0 0 12 18.6c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3z"
+                fill="rgba(0,0,0,0.85)"
+            />
+        </svg>
+    );
 }
 
 const BENEFITS = [
@@ -27,8 +38,8 @@ function LoginContent() {
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
     const [inApp, setInApp] = useState(false);
-    const [copied, setCopied] = useState(false);
     const [isAndroid, setIsAndroid] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         setInApp(isInAppBrowser());
@@ -41,9 +52,8 @@ function LoginContent() {
         }
     }, [status, router, callbackUrl]);
 
-    const handleGoogleLogin = () => {
-        signIn('google', { callbackUrl });
-    };
+    const handleGoogleLogin = () => signIn('google', { callbackUrl });
+    const handleKakaoLogin = () => signIn('kakao', { callbackUrl });
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(window.location.href);
@@ -51,6 +61,7 @@ function LoginContent() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // 카카오톡 인앱 브라우저: 카카오 로그인은 정상 작동
     if (inApp) {
         return (
             <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-6 relative overflow-hidden">
@@ -65,37 +76,43 @@ function LoginContent() {
                         <Logo size="lg" href="/" />
                     </div>
                     <div className="bg-white rounded-3xl p-8 shadow-2xl shadow-slate-200/60 border border-slate-100/80 space-y-5">
-                        <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto">
-                            <ExternalLink className="w-7 h-7 text-amber-500" />
-                        </div>
                         <div className="space-y-2">
-                            <h2 className="text-xl font-bold text-slate-800 font-serif">외부 브라우저에서 열어주세요</h2>
+                            <h2 className="text-xl font-bold text-slate-800 font-serif">카카오로 바로 시작하세요</h2>
                             <p className="text-sm text-slate-500 font-serif leading-relaxed">
-                                카카오톡 내부 브라우저에서는 Google 로그인을 사용할 수 없습니다.<br />
-                                아래 버튼으로 주소를 복사한 뒤, <span className="font-bold text-slate-700">Safari</span> 또는 <span className="font-bold text-slate-700">Chrome</span>에서 열어주세요.
+                                카카오 계정으로 간편하게 로그인할 수 있습니다.
                             </p>
                         </div>
+
+                        <button
+                            onClick={handleKakaoLogin}
+                            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg transition-all hover:opacity-90 active:scale-95"
+                            style={{ backgroundColor: '#FEE500', color: 'rgba(0,0,0,0.85)' }}
+                        >
+                            <KakaoIcon size={22} />
+                            카카오 계정으로 시작하기
+                        </button>
+
+                        <div className="relative flex items-center gap-3">
+                            <div className="flex-1 h-px bg-slate-100" />
+                            <span className="text-xs text-slate-400 font-serif">Google은 외부 브라우저에서</span>
+                            <div className="flex-1 h-px bg-slate-100" />
+                        </div>
+
                         {isAndroid ? (
                             <a
-                                href={`intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`}
-                                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                                href={`intent://${typeof window !== 'undefined' ? window.location.host + window.location.pathname + window.location.search : ''}#Intent;scheme=https;package=com.android.chrome;end`}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 text-slate-500 text-sm font-serif hover:bg-slate-50"
                             >
-                                <ExternalLink className="w-5 h-5" />
                                 Chrome에서 열기
                             </a>
                         ) : (
-                            <>
-                                <button
-                                    onClick={handleCopy}
-                                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
-                                >
-                                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                    {copied ? '복사됐어요!' : '주소 복사하기'}
-                                </button>
-                                <p className="text-xs text-slate-400 font-serif">
-                                    복사 후 Safari/Chrome 주소창에 붙여넣기 하세요.
-                                </p>
-                            </>
+                            <button
+                                onClick={handleCopy}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 text-slate-500 text-sm font-serif hover:bg-slate-50 transition-colors"
+                            >
+                                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                                {copied ? '복사됐어요! Safari/Chrome에 붙여넣기 하세요' : '주소 복사 후 외부 브라우저에서 열기'}
+                            </button>
                         )}
                     </div>
                 </motion.div>
@@ -105,7 +122,6 @@ function LoginContent() {
 
     return (
         <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Ambient Background Blobs */}
             <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] bg-teal-100/30 rounded-full blur-3xl pointer-events-none" />
 
@@ -115,7 +131,6 @@ function LoginContent() {
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 className="w-full max-w-md relative z-10"
             >
-                {/* Logo */}
                 <div className="text-center mb-10">
                     <div className="inline-flex justify-center mb-4">
                         <Logo size="xl" href="/" />
@@ -125,7 +140,6 @@ function LoginContent() {
                     </p>
                 </div>
 
-                {/* Card */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -150,14 +164,26 @@ function LoginContent() {
                         ))}
                     </div>
 
-                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8" />
+                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-6" />
 
-                    {/* Google Login Button */}
+                    {/* 카카오 로그인 (메인) */}
                     <motion.button
-                        whileHover={{ scale: 1.02, boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}
+                        whileHover={{ scale: 1.02, boxShadow: "0 8px 30px rgba(254,229,0,0.4)" }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleKakaoLogin}
+                        className="w-full flex items-center justify-center gap-4 font-bold text-lg py-5 px-6 rounded-2xl transition-all shadow-sm mb-3"
+                        style={{ backgroundColor: '#FEE500', color: 'rgba(0,0,0,0.85)' }}
+                    >
+                        <KakaoIcon size={24} />
+                        카카오 계정으로 시작하기
+                    </motion.button>
+
+                    {/* Google 로그인 */}
+                    <motion.button
+                        whileHover={{ scale: 1.02, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleGoogleLogin}
-                        className="w-full flex items-center justify-center gap-4 bg-white border-2 border-slate-200 hover:border-emerald-400 text-slate-700 font-bold text-lg py-5 px-6 rounded-2xl transition-all shadow-sm"
+                        className="w-full flex items-center justify-center gap-4 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-lg py-5 px-6 rounded-2xl transition-all shadow-sm"
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -168,11 +194,10 @@ function LoginContent() {
                         Google 계정으로 시작하기
                     </motion.button>
 
-                    {/* Notice */}
                     <div className="mt-6 flex items-start gap-2 p-4 bg-emerald-50/70 rounded-2xl border border-emerald-100">
                         <Sparkles size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                         <p className="text-xs text-emerald-700 font-serif leading-relaxed">
-                            Google 계정으로 간편하게 시작하세요. 별도 가입이 필요 없으며, 처음 오시는 분께는 작가명을 설정할 기회가 드려집니다.
+                            별도 가입 없이 간편하게 시작하세요. 처음 오시는 분께는 작가명을 설정할 기회가 드려집니다.
                         </p>
                     </div>
                 </motion.div>

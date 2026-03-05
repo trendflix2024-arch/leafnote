@@ -170,7 +170,7 @@ export default function Home() {
                         <>
                             <button
                                 onClick={() => router.push('/login')}
-                                className="text-xs md:text-sm text-slate-500 hover:text-slate-800 transition-colors hidden sm:block"
+                                className="text-xs md:text-sm text-slate-500 hover:text-slate-800 transition-colors"
                             >
                                 로그인
                             </button>
