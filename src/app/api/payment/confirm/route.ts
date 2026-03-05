@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // 금액 위변조 방지: 서버에서 플랜 가격과 검증
+    const PLAN_PRICES: Record<string, number> = { monthly: 9900, yearly: 79000 };
+    const expectedAmount = PLAN_PRICES[plan as string];
+    if (!expectedAmount || Number(amount) !== expectedAmount) {
+        return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 });
+    }
+
     const secretKey = process.env.TOSS_SECRET_KEY;
     if (!secretKey) {
         return NextResponse.json({ error: 'Payment not configured' }, { status: 500 });

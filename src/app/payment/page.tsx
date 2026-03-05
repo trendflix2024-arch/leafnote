@@ -70,12 +70,15 @@ export default function PaymentPage() {
             }
 
             const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
-            const toss = await loadTossPayments(clientKey);
+            const tossPayments = await loadTossPayments(clientKey);
 
             const plan = plans.find(p => p.id === selectedPlan)!;
             const orderId = `leafnote-${selectedPlan}-${Date.now()}`;
+            const userId = (session.user as any).id as string;
 
-            await toss.requestPayment({
+            // v2 API: tossPayments.payment({ customerKey }).requestPayment(...)
+            const payment = tossPayments.payment({ customerKey: userId });
+            await payment.requestPayment({
                 method: 'CARD',
                 amount: {
                     currency: 'KRW',
@@ -83,8 +86,11 @@ export default function PaymentPage() {
                 },
                 orderId,
                 orderName: `리프노트 ${plan.name}`,
-                successUrl: `${window.location.origin}/payment/success?plan=${selectedPlan}&orderId=${orderId}`,
+                // Toss가 성공 시 ?paymentKey=&orderId=&amount= 자동 추가
+                successUrl: `${window.location.origin}/payment/success?plan=${selectedPlan}`,
                 failUrl: `${window.location.origin}/payment/fail`,
+                customerName: session.user?.name ?? undefined,
+                customerEmail: session.user?.email ?? undefined,
             });
         } catch (err: any) {
             if (err?.code !== 'USER_CANCEL') {
