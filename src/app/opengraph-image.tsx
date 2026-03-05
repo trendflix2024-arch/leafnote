@@ -6,7 +6,22 @@ export const alt = '기억을 꺼내어 리프노트를 틔우다';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+async function fetchGoogleFont(family: string, weight: number): Promise<ArrayBuffer> {
+    const cssUrl = `https://fonts.googleapis.com/css2?family=${family}:wght@${weight}&display=swap`;
+    const css = await (await fetch(cssUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (bb10; Touch) AppleWebKit/537.1+' },
+    })).text();
+    const url = css.match(/src: url\(([^)]+)\)/)?.[1];
+    if (!url) throw new Error(`Font URL not found: ${family} ${weight}`);
+    return (await fetch(url)).arrayBuffer();
+}
+
 export default async function Image() {
+    const [fontBold, fontBlack] = await Promise.all([
+        fetchGoogleFont('Noto+Serif+KR', 700),
+        fetchGoogleFont('Noto+Serif+KR', 900),
+    ]);
+
     return new ImageResponse(
         (
             <div
@@ -18,6 +33,7 @@ export default async function Image() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: 'linear-gradient(160deg, #e8f5f0 0%, #f0faf5 40%, #f7fdfb 70%, #eaf6f0 100%)',
+                    fontFamily: '"Noto Serif KR"',
                 }}
             >
                 {/* Logo row */}
@@ -82,10 +98,10 @@ export default async function Image() {
 
                 {/* Subtitle */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginBottom: '36px' }}>
-                    <span style={{ color: '#475569', fontSize: '20px', textAlign: 'center' }}>
+                    <span style={{ color: '#475569', fontSize: '20px', textAlign: 'center', fontWeight: 700 }}>
                         차가운 기술이 아닌, 당신의 이야기를 들어주는 따뜻한 기록자 에코(Echo).
                     </span>
-                    <span style={{ color: '#475569', fontSize: '20px', textAlign: 'center' }}>
+                    <span style={{ color: '#475569', fontSize: '20px', textAlign: 'center', fontWeight: 700 }}>
                         묻어둔 기억을 AI 인터뷰로 깨워 한 권의 책으로 선물해 드립니다.
                     </span>
                 </div>
@@ -114,18 +130,24 @@ export default async function Image() {
                             alignItems: 'center',
                         }}
                     >
-                        <span style={{ color: '#64748b', fontSize: '19px', fontWeight: 600 }}>브랜드 스토리 보기</span>
+                        <span style={{ color: '#64748b', fontSize: '19px', fontWeight: 700 }}>브랜드 스토리 보기</span>
                     </div>
                 </div>
 
                 {/* Bottom domain */}
                 <div style={{ display: 'flex', marginTop: '32px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '14px', letterSpacing: '1px' }}>
+                    <span style={{ color: '#94a3b8', fontSize: '14px', letterSpacing: '1px', fontWeight: 700 }}>
                         leafnote.co.kr · 모든 인생은 한 권의 책이다
                     </span>
                 </div>
             </div>
         ),
-        { ...size }
+        {
+            ...size,
+            fonts: [
+                { name: 'Noto Serif KR', data: fontBold, weight: 700, style: 'normal' },
+                { name: 'Noto Serif KR', data: fontBlack, weight: 900, style: 'normal' },
+            ],
+        }
     );
 }
