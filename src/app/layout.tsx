@@ -4,14 +4,21 @@ import { Providers } from "@/components/Providers";
 import { SessionWatcher } from "@/components/SessionWatcher";
 
 export const metadata: Metadata = {
-    title: "리프노트 LeafNote - 당신의 대화가 한 권의 잎이 되는 시간",
-    description: "AI 인터뷰로 당신의 소중한 기억을 한 권의 책으로 피워내세요. 따뜻한 기록가 리프노트.",
-    keywords: ["리프노트", "LeafNote", "인생 기록", "AI 인터뷰", "개인 출판", "기록", "부모님 선물"],
+    title: "리프노트 LeafNote - 베타 초대장",
+    description: "작가님을 오래 기다렸습니다. 리프노트 베타 창립 멤버로 참여하세요. 베타 기간 동안 초고 생성·커버 디자인·PDF 다운로드를 무제한 무료로 사용하실 수 있습니다.",
+    keywords: ["리프노트", "LeafNote", "베타 초대", "인생 기록", "AI 인터뷰", "개인 출판", "자서전", "부모님 선물"],
     manifest: "/manifest.json",
     openGraph: {
-        title: "리프노트 LeafNote - 모든 인생은 한 권의 책이다",
-        description: "흩어진 기억을 모아 당신만의 울창한 숲을 기록합니다.",
+        title: "리프노트 베타 초대장 — 작가님을 오래 기다렸습니다",
+        description: "베타 창립 멤버로 참여하세요. 초고 생성 · 커버 디자인 · PDF 다운로드 무제한 무료. 베타 종료 후에도 창립 멤버 특별 혜택이 제공됩니다.",
         type: "website",
+        locale: "ko_KR",
+        siteName: "리프노트 LeafNote",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "리프노트 베타 초대장 — 작가님을 오래 기다렸습니다",
+        description: "베타 창립 멤버로 참여하세요. 모든 기능 무제한 무료.",
     },
 };
 
