@@ -63,8 +63,8 @@ export default function InterviewPage() {
         const initProject = async () => {
             if (status === 'authenticated' && !currentProject && tempOnboardingData) {
                 const title = tempOnboardingData.topic === '자유 주제'
-                    ? `${tempOnboardingData.name}님의 기록`
-                    : `${tempOnboardingData.name}님의 ${tempOnboardingData.topic}`;
+                    ? '나의 기록'
+                    : tempOnboardingData.topic;
 
                 await createProject(title);
                 // Clear temp data once project is created

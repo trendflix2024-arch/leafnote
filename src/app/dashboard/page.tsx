@@ -22,7 +22,7 @@ function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
 
     const hasStories = activeProjects.length > 0;
     // Mock data for "latest story keyword"
-    const latestKeyword = hasStories ? (activeProjects[0].title.split(' ')[0] || '최근') : '';
+    const latestKeyword = hasStories ? (stripNamePrefix(activeProjects[0].title).split(' ')[0] || '최근') : '';
 
     return (
         <AnimatePresence>
@@ -98,6 +98,11 @@ function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
             )}
         </AnimatePresence>
     );
+}
+
+// "OOO님의 제목" 형식의 레거시 제목에서 이름 접두어 제거
+function stripNamePrefix(title: string): string {
+    return title.replace(/^.+님의\s+/, '');
 }
 
 export default function DashboardPage() {
@@ -544,7 +549,7 @@ export default function DashboardPage() {
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <h4 className="font-bold text-slate-800 group-hover:text-emerald-600 transition-colors truncate font-serif text-base sm:text-lg">{project.title}</h4>
+                                                    <h4 className="font-bold text-slate-800 group-hover:text-emerald-600 transition-colors truncate font-serif text-base sm:text-lg">{stripNamePrefix(project.title)}</h4>
                                                     <p className="text-xs text-slate-400">{formatDate(project.updatedAt)} 수정</p>
                                                 </>
                                             )}
@@ -761,7 +766,7 @@ export default function DashboardPage() {
                                 {deletedProjects.map((project) => (
                                     <div key={project.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col justify-between opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
                                         <div>
-                                            <h4 className="font-bold text-slate-600 font-serif mb-1">{project.title}</h4>
+                                            <h4 className="font-bold text-slate-600 font-serif mb-1">{stripNamePrefix(project.title)}</h4>
                                             <p className="text-[10px] text-slate-400">떨어진 잎사귀: {(project.fullDraft?.length || 0).toLocaleString()}자</p>
                                         </div>
                                         <div className="flex gap-2 mt-4">
