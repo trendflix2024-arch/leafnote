@@ -120,15 +120,21 @@ export default function DashboardPage() {
     const { updateUserProfile } = useBookStore();
 
     useEffect(() => {
-        if (session && (session.user as any)?.isNewUser) {
-            const userId = (session.user as any).id as string || '';
-            const alreadySet = localStorage.getItem(`leafnote-name-set-${userId}`);
-            if (!alreadySet) {
-                setShowNamePrompt(true);
-                setAuthorName('');
-            }
+        if (!session || !(session.user as any)?.isNewUser) return;
+        const userId = (session.user as any).id as string || '';
+        const alreadySet = localStorage.getItem(`leafnote-name-set-${userId}`);
+        if (alreadySet) return;
+
+        // 이미 이름이 설정되어 있으면 모달 불필요 — localStorage만 채워두고 종료
+        const existingName = userProfile?.name || session.user?.name || '';
+        if (existingName && existingName !== '작가님') {
+            localStorage.setItem(`leafnote-name-set-${userId}`, 'true');
+            return;
         }
-    }, [session]);
+
+        setShowNamePrompt(true);
+        setAuthorName('');
+    }, [session, userProfile]);
 
     const handleNameSubmit = async () => {
         const finalName = authorName.trim() || '작가님';
