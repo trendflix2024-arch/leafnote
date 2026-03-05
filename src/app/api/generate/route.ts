@@ -1,12 +1,49 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || '');
 
+const FREE_DRAFT_LIMIT = 1;
+
 export async function POST(req: Request) {
     if (!GEMINI_API_KEY) {
         return NextResponse.json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다. 관리자에게 문의하세요.' }, { status: 500 });
+    }
+
+    // 구독 및 사용량 체크
+    const session = await getServerSession(authOptions);
+    let userId: string | null = null;
+    let draftCountBefore = 0;
+
+    if (session?.user) {
+        userId = (session.user as any).id as string;
+
+        const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('plan, status, expires_at')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        const now = new Date();
+        const isActive = sub?.status === 'active' && sub?.expires_at && new Date(sub.expires_at) > now;
+        const isPremium = isActive && (sub?.plan === 'monthly' || sub?.plan === 'yearly');
+
+        if (!isPremium) {
+            const { data: usage } = await supabase
+                .from('usage_stats')
+                .select('draft_count')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            draftCountBefore = usage?.draft_count ?? 0;
+            if (draftCountBefore >= FREE_DRAFT_LIMIT) {
+                return NextResponse.json({ error: 'upgrade_required' }, { status: 403 });
+            }
+        }
     }
 
     try {
@@ -62,6 +99,15 @@ export async function POST(req: Request) {
 
         if (!draft) {
             throw new Error('AI 응답이 비어있습니다.');
+        }
+
+        // 사용량 증가
+        if (userId) {
+            await supabase.from('usage_stats').upsert({
+                user_id: userId,
+                draft_count: draftCountBefore + 1,
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id' }).catch(() => null);
         }
 
         return NextResponse.json({ draft });

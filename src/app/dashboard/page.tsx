@@ -6,10 +6,48 @@ import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Se
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { InstallBanner } from '@/components/InstallBanner';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+
+function SubscriptionBanner() {
+    const { isPremium, plan, expiresAt, remainingInterviews, isLoading, FREE_INTERVIEW_LIMIT } = useSubscription();
+    const router = useRouter();
+
+    if (isLoading || isPremium) return null;
+
+    const expiringSoon = expiresAt && new Date(expiresAt) > new Date() &&
+        (new Date(expiresAt).getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000;
+
+    if (expiringSoon) {
+        return (
+            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <p className="text-sm text-amber-700 font-medium">
+                    ⚠️ 구독이 곧 만료됩니다. ({new Date(expiresAt!).toLocaleDateString('ko-KR')} 만료)
+                </p>
+                <button onClick={() => router.push('/payment')} className="shrink-0 text-xs font-bold bg-amber-500 text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-colors">
+                    갱신하기
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div>
+                <p className="text-sm font-bold text-slate-700">
+                    🌱 무료 플랜 · 인터뷰 {FREE_INTERVIEW_LIMIT - remainingInterviews}/{FREE_INTERVIEW_LIMIT}회 사용
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">구독하면 인터뷰와 원고 생성이 무제한이에요</p>
+            </div>
+            <button onClick={() => router.push('/payment')} className="shrink-0 text-xs font-bold bg-emerald-600 text-white px-4 py-1.5 rounded-full hover:bg-emerald-700 transition-colors">
+                구독하기
+            </button>
+        </div>
+    );
+}
 
 function DynamicGreeting({ activeProjects }: { activeProjects: Project[] }) {
     const [isVisible, setIsVisible] = useState(false);
@@ -366,6 +404,9 @@ export default function DashboardPage() {
 
                 {/* PWA Install Banner */}
                 <InstallBanner />
+
+                {/* Subscription Banner */}
+                <SubscriptionBanner />
 
                 {/* Stats - Reformatted for Seniors (3 Cards) */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
