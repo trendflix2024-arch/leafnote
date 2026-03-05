@@ -28,9 +28,11 @@ function LoginContent() {
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
     const [inApp, setInApp] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isAndroid, setIsAndroid] = useState(false);
 
     useEffect(() => {
         setInApp(isInAppBrowser());
+        setIsAndroid(/android/i.test(navigator.userAgent));
     }, []);
 
     useEffect(() => {
@@ -73,16 +75,28 @@ function LoginContent() {
                                 아래 버튼으로 주소를 복사한 뒤, <span className="font-bold text-slate-700">Safari</span> 또는 <span className="font-bold text-slate-700">Chrome</span>에서 열어주세요.
                             </p>
                         </div>
-                        <button
-                            onClick={handleCopy}
-                            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
-                        >
-                            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                            {copied ? '복사됐어요!' : '주소 복사하기'}
-                        </button>
-                        <p className="text-xs text-slate-400 font-serif">
-                            복사 후 브라우저 주소창에 붙여넣기 하세요.
-                        </p>
+                        {isAndroid ? (
+                            <a
+                                href={`intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;end`}
+                                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                            >
+                                <ExternalLink className="w-5 h-5" />
+                                Chrome에서 열기
+                            </a>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={handleCopy}
+                                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                                >
+                                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                    {copied ? '복사됐어요!' : '주소 복사하기'}
+                                </button>
+                                <p className="text-xs text-slate-400 font-serif">
+                                    복사 후 Safari/Chrome 주소창에 붙여넣기 하세요.
+                                </p>
+                            </>
+                        )}
                     </div>
                 </motion.div>
             </div>
