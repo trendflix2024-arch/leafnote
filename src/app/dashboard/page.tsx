@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
+import { InstallBanner } from '@/components/InstallBanner';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -362,6 +363,9 @@ export default function DashboardPage() {
                     </h2>
                     <p className="text-sm sm:text-lg text-slate-500 font-medium">당신의 소중한 이야기를 한 권의 잎으로 기록해 보세요.</p>
                 </div>
+
+                {/* PWA Install Banner */}
+                <InstallBanner />
 
                 {/* Stats - Reformatted for Seniors (3 Cards) */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
