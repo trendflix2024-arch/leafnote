@@ -4,8 +4,8 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { Sparkles, Leaf } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 const BENEFITS = [
     "AI 기록가 에코와 함께하는 따뜻한 인터뷰",
@@ -43,26 +43,10 @@ function LoginContent() {
             >
                 {/* Logo */}
                 <div className="text-center mb-10">
-                    <Link href="/" className="inline-flex flex-col items-center gap-4 group cursor-pointer">
-                        <motion.div
-                            whileHover={{ scale: 1.08, rotate: -3 }}
-                            className="w-20 h-20 bg-emerald-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-200/60"
-                        >
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22C12 22 20 18 20 12C20 6 12 2 12 2C12 2 4 6 4 12C4 18 12 22 12 22Z" fill="white" fillOpacity="0.2" />
-                                <path d="M12 22V2M12 22C12 22 20 18 20 12C20 6 12 2 12 2M12 22C12 22 4 6 4 12C4 18 12 22 12 22ZM12 7C14 7 16 8 16 10M12 11C15 11 17 12 17 14M12 15C13.5 15 15 15.5 15 17M12 7C10 7 8 8 8 10M12 11C9 11 7 12 7 14M12 15C10.5 15 9 15.5 9 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                        </motion.div>
-                        <div>
-                            <h1 className="text-4xl font-serif font-bold text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
-                                리프노트
-                            </h1>
-                            <p className="text-emerald-600 text-sm font-medium mt-1 tracking-widest uppercase">
-                                LeafNote
-                            </p>
-                        </div>
-                    </Link>
-                    <p className="text-slate-500 text-base font-serif mt-4 leading-relaxed">
+                    <div className="inline-flex justify-center mb-4">
+                        <Logo size="xl" href="/" />
+                    </div>
+                    <p className="text-slate-500 text-base font-serif leading-relaxed">
                         당신의 대화가 한 권의 잎이 되는 시간
                     </p>
                 </div>

@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChatPreview } from '@/components/landing/ChatPreview';
 import { BackgroundEffects } from '@/components/landing/BackgroundEffects';
+import { Logo } from '@/components/Logo';
 import { useSession } from 'next-auth/react';
 import { useBookStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -161,15 +162,7 @@ export default function Home() {
 
             {/* 네비 */}
             <nav className="p-4 md:p-6 flex justify-between items-center max-w-7xl mx-auto sticky top-0 z-50 backdrop-blur-md bg-white/40 border-b border-white/20">
-                <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100/50">
-                        <svg width="20" height="20" className="md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22C12 22 20 18 20 12C20 6 12 2 12 2C12 2 4 6 4 12C4 18 12 22 12 22Z" fill="white" fillOpacity="0.2" />
-                            <path d="M12 22V2M12 22C12 22 20 18 20 12C20 6 12 2 12 2M12 22C12 22 4 6 4 12C4 18 12 22 12 22ZM12 7C14 7 16 8 16 10M12 11C15 11 17 12 17 14M12 15C13.5 15 15 15.5 15 17M12 7C10 7 8 8 8 10M12 11C9 11 7 12 7 14M12 15C10.5 15 9 15.5 9 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                    </div>
-                    <span className="text-lg md:text-2xl font-serif font-bold text-slate-800 tracking-tight whitespace-nowrap">리프노트 <span className="text-emerald-600 hidden xs:inline">LeafNote</span></span>
-                </div>
+                <Logo size="sm" />
                 <div className="flex gap-3 md:gap-4 items-center">
                     {!session ? (
                         <>
@@ -454,14 +447,8 @@ export default function Home() {
             <footer className="border-t border-slate-200/50 py-10 md:py-16 bg-white/50">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-10">
                     <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center shadow-md shadow-emerald-100/30">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 22C12 22 20 18 20 12C20 6 12 2 12 2C12 2 4 6 4 12C4 18 12 22 12 22Z" fill="white" fillOpacity="0.2" />
-                                    <path d="M12 22V2M12 22C12 22 20 18 20 12C20 6 12 2 12 2M12 22C12 22 4 6 4 12C4 18 12 22 12 22ZM12 7C14 7 16 8 16 10M12 11C15 11 17 12 17 14M12 15C13.5 15 15 15.5 15 17M12 7C10 7 8 8 8 10M12 11C9 11 7 12 7 14M12 15C10.5 15 9 15.5 9 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                                </svg>
-                            </div>
-                            <span className="text-base font-serif font-bold text-slate-800 tracking-tight">리프노트 <span className="text-emerald-600">LeafNote</span></span>
+                        <div className="mb-3">
+                            <Logo size="sm" href="/" />
                         </div>
                         <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
                             AI 인터뷰어 <span className="text-emerald-600 font-bold">에코</span>와 함께 당신의 목소리를 한 권의 책으로 담는 가장 쉬운 방법.

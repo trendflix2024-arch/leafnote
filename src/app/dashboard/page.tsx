@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/Logo';
 import { useBookStore, Project } from '@/lib/store';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -291,15 +292,7 @@ export default function DashboardPage() {
             {/* Top Bar - Mobile Optimized */}
             <header className="bg-white border-b sticky top-0 z-20">
                 <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-105 transition-transform">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22C12 22 20 18 20 12C20 6 12 2 12 2C12 2 4 6 4 12C4 18 12 22 12 22Z" fill="white" fillOpacity="0.2" />
-                                <path d="M12 22V2M12 22C12 22 20 18 20 12C20 6 12 2 12 2M12 22C12 22 4 6 4 12C4 18 12 22 12 22ZM12 7C14 7 16 8 16 10M12 11C15 11 17 12 17 14M12 15C13.5 15 15 15.5 15 17M12 7C10 7 8 8 8 10M12 11C9 11 7 12 7 14M12 15C10.5 15 9 15.5 9 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                        </div>
-                        <h1 className="text-base sm:text-2xl font-serif font-bold text-slate-800 group-hover:text-emerald-700 transition-colors whitespace-nowrap">리프노트 <span className="text-emerald-600 text-[10px] sm:text-lg ml-0.5 sm:ml-1 font-sans">LeafNote</span></h1>
-                    </Link>
+                    <Logo size="sm" href="/" />
 
                     {/* Desktop Navigation - hidden on mobile */}
                     <nav className="hidden md:flex items-center gap-6 ml-8">
