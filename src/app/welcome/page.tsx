@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sprout, ArrowRight, Sparkles, TreePine, Medal, Leaf } from 'lucide-react';
 import { Logo } from '@/components/Logo';
@@ -14,6 +17,17 @@ const floatingLeaves = Array.from({ length: 8 }, (_, i) => ({
 }));
 
 export default function WelcomePage() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.replace('/onboarding');
+        }
+    }, [status, router]);
+
+    if (status === 'loading' || status === 'authenticated') return null;
+
     return (
         <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-900 px-4 py-12">
 

@@ -155,6 +155,8 @@ export default function Home() {
     const { userProfile } = useBookStore();
     const router = useRouter();
 
+    const handleCTA = () => router.push(session ? '/onboarding' : '/welcome');
+
     return (
         <div className="min-h-screen relative selection:bg-emerald-100 selection:text-emerald-900">
 
@@ -175,7 +177,7 @@ export default function Home() {
                             <Button
                                 size="sm"
                                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm px-4 md:px-5 shadow-md shadow-emerald-100"
-                                onClick={() => window.location.href = '/welcome'}
+                                onClick={() => router.push('/welcome')}
                             >
                                 베타 참여하기 <ArrowRight size={13} className="ml-1" />
                             </Button>
@@ -240,7 +242,7 @@ export default function Home() {
                         <Button
                             size="lg"
                             className="group w-full sm:w-auto px-8 md:px-12 py-6 md:py-7 text-lg md:text-xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 border-none overflow-hidden relative"
-                            onClick={() => window.location.href = '/welcome'}
+                            onClick={handleCTA}
                         >
                             <span className="relative z-10 flex items-center justify-center">
                                 기록의 시작, 씨앗 심기 <ArrowRight className="ml-2 md:ml-3 group-hover:translate-x-2 transition-transform" />
@@ -281,7 +283,7 @@ export default function Home() {
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.05 }}
                                 className="bg-white/80 backdrop-blur-xl border border-emerald-50/50 rounded-[2rem] p-5 md:p-6 shadow-xl shadow-emerald-900/5 hover:-translate-y-2 hover:shadow-2xl transition-all cursor-pointer group"
-                                onClick={() => window.location.href = '/welcome'}
+                                onClick={handleCTA}
                             >
                                 <div className="w-10 h-10 bg-emerald-50 group-hover:bg-emerald-100 rounded-xl flex items-center justify-center mb-4 transition-colors">
                                     <topic.icon size={20} className="text-emerald-600" />
@@ -423,7 +425,7 @@ export default function Home() {
                             <Button
                                 size="lg"
                                 className="group w-full sm:w-auto px-10 md:px-16 py-8 md:py-10 text-xl md:text-2xl rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 border-none overflow-hidden relative mx-auto"
-                                onClick={() => window.location.href = '/welcome'}
+                                onClick={handleCTA}
                             >
                                 <span className="relative z-10 flex items-center justify-center">
                                     기록의 시작, 씨앗 심기 <ArrowRight className="ml-3 md:ml-4 group-hover:translate-x-3 transition-transform" />
