@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sparkles, Leaf } from 'lucide-react';
+import { Sparkles, Leaf, ExternalLink, Copy, Check } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+
+function isInAppBrowser(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent.toLowerCase();
+    return ua.includes('kakaotalk') || ua.includes('kakaomini') ||
+        ua.includes('line/') || ua.includes('instagram') ||
+        ua.includes('fbav') || ua.includes('fban');
+}
 
 const BENEFITS = [
     "AI 기록가 에코와 함께하는 따뜻한 인터뷰",
@@ -18,6 +26,12 @@ function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    const [inApp, setInApp] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        setInApp(isInAppBrowser());
+    }, []);
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -28,6 +42,52 @@ function LoginContent() {
     const handleGoogleLogin = () => {
         signIn('google', { callbackUrl });
     };
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    if (inApp) {
+        return (
+            <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-6 relative overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] bg-teal-100/30 rounded-full blur-3xl pointer-events-none" />
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-md relative z-10 text-center space-y-6"
+                >
+                    <div className="inline-flex justify-center mb-2">
+                        <Logo size="lg" href="/" />
+                    </div>
+                    <div className="bg-white rounded-3xl p-8 shadow-2xl shadow-slate-200/60 border border-slate-100/80 space-y-5">
+                        <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto">
+                            <ExternalLink className="w-7 h-7 text-amber-500" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-bold text-slate-800 font-serif">외부 브라우저에서 열어주세요</h2>
+                            <p className="text-sm text-slate-500 font-serif leading-relaxed">
+                                카카오톡 내부 브라우저에서는 Google 로그인을 사용할 수 없습니다.<br />
+                                아래 버튼으로 주소를 복사한 뒤, <span className="font-bold text-slate-700">Safari</span> 또는 <span className="font-bold text-slate-700">Chrome</span>에서 열어주세요.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleCopy}
+                            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                        >
+                            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                            {copied ? '복사됐어요!' : '주소 복사하기'}
+                        </button>
+                        <p className="text-xs text-slate-400 font-serif">
+                            복사 후 브라우저 주소창에 붙여넣기 하세요.
+                        </p>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4 relative overflow-hidden">
