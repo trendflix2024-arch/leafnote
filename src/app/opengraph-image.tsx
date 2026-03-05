@@ -83,17 +83,10 @@ export default async function Image() {
                     >
                         기억을 꺼내어
                     </span>
-                    <span
-                        style={{
-                            color: '#059669',
-                            fontSize: '84px',
-                            fontWeight: 900,
-                            letterSpacing: '-3px',
-                            lineHeight: '1',
-                        }}
-                    >
-                        리프노트를 틔우다
-                    </span>
+                    <div style={{ display: 'flex', letterSpacing: '-3px', lineHeight: '1' }}>
+                        <span style={{ color: '#059669', fontSize: '84px', fontWeight: 900 }}>리프노트</span>
+                        <span style={{ color: '#0f172a', fontSize: '84px', fontWeight: 900 }}>를 틔우다</span>
+                    </div>
                 </div>
 
                 {/* Subtitle */}
