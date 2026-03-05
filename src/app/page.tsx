@@ -152,10 +152,13 @@ function BookMockup() {
 
 export default function Home() {
     const { data: session } = useSession();
-    const { userProfile } = useBookStore();
+    const { userProfile, projects } = useBookStore();
     const router = useRouter();
 
-    const handleCTA = () => router.push(session ? '/onboarding' : '/welcome');
+    const handleCTA = () => {
+        if (!session) return router.push('/welcome');
+        router.push(projects && projects.length > 0 ? '/dashboard' : '/onboarding');
+    };
 
     return (
         <div className="min-h-screen relative selection:bg-emerald-100 selection:text-emerald-900">
