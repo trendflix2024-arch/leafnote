@@ -649,15 +649,29 @@ export default function DashboardPage() {
                                                     )}
 
                                                     <hr className="my-1" />
-                                                    <button
-                                                        onClick={() => {
-                                                            setIsSelectingTone(project.id);
-                                                            setShowMenu(null);
-                                                        }}
-                                                        className="w-full px-4 py-2 text-sm text-left text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
-                                                    >
-                                                        <RefreshCw size={14} /> 원고 새로 쓰기
-                                                    </button>
+                                                    {project.fullDraft && (
+                                                        <button
+                                                            onClick={() => {
+                                                                switchProject(project.id);
+                                                                router.push('/editor');
+                                                                setShowMenu(null);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-sm text-left text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                                                        >
+                                                            <Sparkles size={14} /> 원고 다듬기
+                                                        </button>
+                                                    )}
+                                                    {project.fullDraft && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsSelectingTone(project.id);
+                                                                setShowMenu(null);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-sm text-left text-slate-500 hover:bg-slate-50 flex items-center gap-2"
+                                                        >
+                                                            <RefreshCw size={14} /> 원고 새로 쓰기
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => {
                                                             deleteProject(project.id);
