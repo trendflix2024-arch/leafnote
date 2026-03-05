@@ -5,7 +5,9 @@ import { supabase } from "@/lib/supabase";
 
 function isAdmin(email: string | null | undefined): boolean {
     if (!email) return false;
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
+    // Support both ADMIN_EMAILS (comma-separated) and ADMIN_EMAIL (single)
+    const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+    const adminEmails = raw
         .split(",")
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
