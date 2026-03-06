@@ -61,13 +61,16 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(baseDate);
     expiresAt.setMonth(expiresAt.getMonth() + coupon.duration_months);
 
-    // 5. 구독 upsert
-    const { error: subError } = await supabase.from('subscriptions').upsert({
-        user_id: userId,
-        plan: 'monthly',
-        status: 'active',
-        expires_at: expiresAt.toISOString(),
-    }, { onConflict: 'user_id' });
+    // 5. 구독 저장 (기존 구독 있으면 UPDATE, 없으면 INSERT)
+    let subError;
+    if (currentSub) {
+        ({ error: subError } = await supabase.from('subscriptions')
+            .update({ plan: 'monthly', status: 'active', expires_at: expiresAt.toISOString() })
+            .eq('user_id', userId));
+    } else {
+        ({ error: subError } = await supabase.from('subscriptions')
+            .insert({ user_id: userId, plan: 'monthly', status: 'active', expires_at: expiresAt.toISOString() }));
+    }
 
     if (subError) {
         console.error('Coupon subscription upsert error:', subError);
