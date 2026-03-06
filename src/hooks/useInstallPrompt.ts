@@ -47,8 +47,9 @@ export function useInstallPrompt() {
         setDismissed(true);
     };
 
-    const isMobile = isIOS || isAndroid;
-    const showBanner = !isStandalone && !dismissed && isMobile;
+    // Android: beforeinstallprompt 이벤트가 발생했을 때만 표시 (버튼 클릭 = 즉시 설치)
+    // iOS: 항상 표시 (공유 → 홈 화면에 추가 안내)
+    const showBanner = !isStandalone && !dismissed && (!!deferredPrompt || isIOS);
 
-    return { showBanner, isIOS, isAndroid, deferredPrompt, install, dismiss };
+    return { showBanner, isIOS, deferredPrompt, install, dismiss };
 }
