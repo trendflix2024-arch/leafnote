@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { InstallBanner } from '@/components/InstallBanner';
@@ -382,6 +382,12 @@ export default function DashboardPage() {
                                     </div>
                                     <button onClick={() => router.push('/profile')} className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 flex items-center gap-2"><UserCircle size={16} /> 프로필</button>
                                     <button onClick={() => router.push('/settings')} className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 flex items-center gap-2"><Settings size={16} /> 설정</button>
+                                    {(process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim()).includes(session.user?.email || '') && (
+                                        <>
+                                            <hr className="my-1" />
+                                            <button onClick={() => router.push('/admin/coupons')} className="w-full px-4 py-2 text-sm text-left hover:bg-purple-50 flex items-center gap-2 text-purple-600"><Tag size={16} /> 쿠폰 관리</button>
+                                        </>
+                                    )}
                                     <hr className="my-1" />
                                     <button className="w-full px-4 py-2 text-sm text-left hover:bg-slate-50 flex items-center gap-2 text-red-500"
                                         onClick={handleLogout}
