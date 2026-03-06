@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Check, Shield, Zap, Crown, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Shield, Zap, Crown, ArrowRight, Tag, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -48,6 +48,12 @@ export default function PaymentPage() {
     const router = useRouter();
     const [selectedPlan, setSelectedPlan] = useState('yearly');
     const [isLoading, setIsLoading] = useState(false);
+
+    // 쿠폰
+    const [showCoupon, setShowCoupon] = useState(false);
+    const [couponCode, setCouponCode] = useState('');
+    const [couponStatus, setCouponStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [couponMsg, setCouponMsg] = useState('');
 
     const handlePayment = async () => {
         if (selectedPlan === 'free') {
@@ -99,6 +105,39 @@ export default function PaymentPage() {
             }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleCoupon = async () => {
+        if (!couponCode.trim()) return;
+        if (!session?.user) { router.push('/login'); return; }
+
+        setCouponStatus('loading');
+        try {
+            const res = await fetch('/api/coupon/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: couponCode }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const expire = new Date(data.expiresAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+                setCouponMsg(`🎉 ${expire}까지 무료 구독이 활성화되었어요!`);
+                setCouponStatus('success');
+                setTimeout(() => router.push('/dashboard'), 2500);
+            } else {
+                const msgs: Record<string, string> = {
+                    COUPON_NOT_FOUND: '존재하지 않는 쿠폰 코드예요.',
+                    COUPON_EXHAUSTED: '이미 소진된 쿠폰이에요.',
+                    COUPON_ALREADY_USED: '이미 사용하신 쿠폰이에요.',
+                };
+                setCouponMsg(msgs[data.error] || '쿠폰 적용에 실패했어요.');
+                setCouponStatus('error');
+            }
+        } catch {
+            setCouponMsg('네트워크 오류가 발생했어요.');
+            setCouponStatus('error');
         }
     };
 
@@ -178,6 +217,57 @@ export default function PaymentPage() {
                     <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
                         <Shield size={13} />
                         <span>토스페이먼츠로 안전하게 결제 · 언제든지 해지 가능</span>
+                    </div>
+
+                    {/* 쿠폰 섹션 */}
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <button
+                            onClick={() => setShowCoupon(v => !v)}
+                            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors mx-auto"
+                        >
+                            <Tag size={14} />
+                            쿠폰 코드가 있으신가요?
+                            <ChevronDown size={14} className={`transition-transform ${showCoupon ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showCoupon && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="mt-4 flex gap-2 max-w-sm mx-auto">
+                                        <input
+                                            value={couponCode}
+                                            onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); }}
+                                            onKeyDown={e => e.key === 'Enter' && handleCoupon()}
+                                            placeholder="쿠폰 코드 입력"
+                                            disabled={couponStatus === 'loading' || couponStatus === 'success'}
+                                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none font-mono tracking-wider uppercase"
+                                        />
+                                        <button
+                                            onClick={handleCoupon}
+                                            disabled={couponStatus === 'loading' || couponStatus === 'success' || !couponCode.trim()}
+                                            className="px-4 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                                        >
+                                            {couponStatus === 'loading' ? <Loader2 size={14} className="animate-spin" /> : '적용'}
+                                        </button>
+                                    </div>
+
+                                    {couponStatus !== 'idle' && couponStatus !== 'loading' && (
+                                        <motion.p
+                                            initial={{ opacity: 0, y: -4 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className={`mt-2 text-sm text-center font-medium ${couponStatus === 'success' ? 'text-emerald-600' : 'text-red-500'}`}
+                                        >
+                                            {couponMsg}
+                                        </motion.p>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>
