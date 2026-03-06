@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users, Tag } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users, Tag, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { InstallBanner } from '@/components/InstallBanner';
@@ -386,6 +386,7 @@ export default function DashboardPage() {
                                         <>
                                             <hr className="my-1" />
                                             <button onClick={() => router.push('/admin/coupons')} className="w-full px-4 py-2 text-sm text-left hover:bg-purple-50 flex items-center gap-2 text-purple-600"><Tag size={16} /> 쿠폰 관리</button>
+                                            <button onClick={() => router.push('/admin/feedback')} className="w-full px-4 py-2 text-sm text-left hover:bg-purple-50 flex items-center gap-2 text-purple-600"><MessageSquare size={16} /> 피드백 관리</button>
                                         </>
                                     )}
                                     <hr className="my-1" />
