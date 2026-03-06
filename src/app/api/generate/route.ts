@@ -107,7 +107,7 @@ export async function POST(req: Request) {
                 user_id: userId,
                 draft_count: draftCountBefore + 1,
                 updated_at: new Date().toISOString(),
-            }, { onConflict: 'user_id' }).catch(() => null);
+            }, { onConflict: 'user_id' });
         }
 
         return NextResponse.json({ draft });
