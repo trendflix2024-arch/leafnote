@@ -6,10 +6,13 @@ import { X, Smartphone, Share, Plus } from 'lucide-react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function InstallBanner() {
-    const { showBanner, isIOS, install, dismiss } = useInstallPrompt();
-    const [showIOSGuide, setShowIOSGuide] = useState(false);
+    const { showBanner, isIOS, isAndroid, deferredPrompt, install, dismiss } = useInstallPrompt();
+    const [showGuide, setShowGuide] = useState(false);
 
     if (!showBanner) return null;
+
+    // Android + 네이티브 프롬프트 사용 가능 → 버튼 한 번으로 설치
+    const canNativeInstall = isAndroid && !!deferredPrompt;
 
     return (
         <AnimatePresence>
@@ -40,16 +43,23 @@ export function InstallBanner() {
                             앱처럼 바로 실행할 수 있어요
                         </p>
 
-                        {isIOS ? (
+                        {canNativeInstall ? (
+                            <button
+                                onClick={install}
+                                className="mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors font-serif"
+                            >
+                                홈 화면에 추가
+                            </button>
+                        ) : (
                             <>
                                 <button
-                                    onClick={() => setShowIOSGuide(v => !v)}
+                                    onClick={() => setShowGuide(v => !v)}
                                     className="mt-2 text-xs font-semibold text-emerald-700 underline underline-offset-2"
                                 >
-                                    {showIOSGuide ? '안내 닫기' : '추가 방법 보기'}
+                                    {showGuide ? '안내 닫기' : '추가 방법 보기'}
                                 </button>
                                 <AnimatePresence>
-                                    {showIOSGuide && (
+                                    {showGuide && (
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: 'auto' }}
@@ -57,26 +67,34 @@ export function InstallBanner() {
                                             className="overflow-hidden"
                                         >
                                             <div className="mt-2 space-y-1.5">
-                                                <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
-                                                    <Share size={13} className="shrink-0" />
-                                                    <span>하단의 <strong>공유</strong> 버튼을 누르세요</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
-                                                    <Plus size={13} className="shrink-0" />
-                                                    <span><strong>홈 화면에 추가</strong>를 선택하세요</span>
-                                                </div>
+                                                {isIOS ? (
+                                                    <>
+                                                        <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
+                                                            <Share size={13} className="shrink-0" />
+                                                            <span>하단의 <strong>공유</strong> 버튼을 누르세요</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
+                                                            <Plus size={13} className="shrink-0" />
+                                                            <span><strong>홈 화면에 추가</strong>를 선택하세요</span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
+                                                            <span className="shrink-0 font-bold text-sm">⋮</span>
+                                                            <span>Chrome 우측 상단 <strong>메뉴(⋮)</strong>를 누르세요</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs text-emerald-700 font-serif">
+                                                            <Plus size={13} className="shrink-0" />
+                                                            <span><strong>홈 화면에 추가</strong>를 선택하세요</span>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
                             </>
-                        ) : (
-                            <button
-                                onClick={install}
-                                className="mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors font-serif"
-                            >
-                                홈 화면에 추가
-                            </button>
                         )}
                     </div>
                 </div>

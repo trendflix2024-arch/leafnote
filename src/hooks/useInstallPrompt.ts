@@ -15,8 +15,12 @@ export function useInstallPrompt() {
     const [isIOS, setIsIOS] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
 
+    const [isAndroid, setIsAndroid] = useState(false);
+
     useEffect(() => {
-        setIsIOS(/iphone|ipad|ipod/i.test(navigator.userAgent));
+        const ua = navigator.userAgent;
+        setIsIOS(/iphone|ipad|ipod/i.test(ua));
+        setIsAndroid(/android/i.test(ua));
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
         setDismissed(!!localStorage.getItem(DISMISSED_KEY));
 
@@ -43,7 +47,8 @@ export function useInstallPrompt() {
         setDismissed(true);
     };
 
-    const showBanner = !isStandalone && !dismissed && (!!deferredPrompt || isIOS);
+    const isMobile = isIOS || isAndroid;
+    const showBanner = !isStandalone && !dismissed && isMobile;
 
-    return { showBanner, isIOS, install, dismiss };
+    return { showBanner, isIOS, isAndroid, deferredPrompt, install, dismiss };
 }
