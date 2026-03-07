@@ -3,10 +3,12 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useBookStore } from "@/lib/store";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 export function SessionWatcher() {
     const { data: session, status } = useSession();
     const { setUserProfile, fetchProjects, fetchUserProfile, fetchChatHistory, resetAll, userProfile } = useBookStore();
+    usePageTracking();
     const hasFetchedRef = useRef(false);
 
     useEffect(() => {
