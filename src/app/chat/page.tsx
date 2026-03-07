@@ -31,9 +31,10 @@ export default function ChatPage() {
         }
     }, [chatHistory, isTyping]);
 
-    // Check for existing history on mount
+    // Check for existing history on mount (only show if user has actually sent messages)
     useEffect(() => {
-        if (status === 'authenticated' && chatHistory.length > 0 && !hasPromptedRef.current) {
+        const hasUserMessages = chatHistory.some(m => m.role === 'user');
+        if (status === 'authenticated' && hasUserMessages && !hasPromptedRef.current) {
             setShowContinuationPrompt(true);
             hasPromptedRef.current = true;
         }
