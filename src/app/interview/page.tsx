@@ -45,6 +45,7 @@ export default function InterviewPage() {
 
     const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
+    const [speechError, setSpeechError] = useState<string | null>(null);
     const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -152,6 +153,13 @@ export default function InterviewPage() {
                 recognition.onerror = (event: any) => {
                     console.error('Speech recognition error:', event.error);
                     setIsListening(false);
+                    if (event.error === 'not-allowed') {
+                        setSpeechError('마이크 권한이 필요합니다. 브라우저 설정에서 허용해주세요.');
+                    } else if (event.error === 'no-speech') {
+                        setSpeechError(null); // 무음은 에러 아님
+                    } else {
+                        setSpeechError('음성 인식 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    }
                 };
 
                 recognition.onend = () => {
@@ -200,7 +208,13 @@ export default function InterviewPage() {
         );
     }
 
-    if (!session || !currentProject) return null;
+    if (!session || !currentProject) {
+        return (
+            <div className="h-screen bg-[#FAF9F6] flex items-center justify-center">
+                <div className="animate-pulse text-emerald-600 font-serif font-bold">리프노트 준비 중...</div>
+            </div>
+        );
+    }
 
     const userMessages = messages.filter((m: any) => m.role === 'user');
     const userMsgCount = userMessages.length;
@@ -468,6 +482,16 @@ export default function InterviewPage() {
                         className="max-w-4xl mx-auto mt-3 text-xs text-emerald-600 font-bold text-center"
                     >
                         인터뷰 내용이 자동으로 텍스트로 변환되고 있습니다.
+                    </motion.p>
+                )}
+                {speechError && (
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="max-w-4xl mx-auto mt-2 text-xs text-red-500 text-center flex items-center justify-center gap-1"
+                    >
+                        <AlertCircle size={12} />
+                        {speechError}
                     </motion.p>
                 )}
             </footer>

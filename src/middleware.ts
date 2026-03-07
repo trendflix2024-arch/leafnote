@@ -33,5 +33,9 @@ export const config = {
         "/design",
         "/export/:path*",
         "/export",
+        "/payment",
+        "/payment/success",
+        "/payment/fail",
+        "/onboarding",
     ],
 };

@@ -76,6 +76,7 @@ function EditorContent() {
     const [isAutoSaving, setIsAutoSaving] = useState(false);
     const [lastSavedDraft, setLastSavedDraft] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [generateError, setGenerateError] = useState<string | null>(null);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -198,6 +199,7 @@ function EditorContent() {
     async function generateDraft() {
         if (!currentProject) return;
         setIsGenerating(true);
+        setGenerateError(null);
         try {
             const currentTone = searchParams?.get('tone') || '';
             const toneParam = currentTone ? { tone: currentTone } : {};
@@ -218,18 +220,45 @@ function EditorContent() {
                 setChapters(parsed);
                 setActiveChapter(0);
 
-                // Save the newly generated draft immediately
                 const combined = parsed.map(c => `## ${c.title}\n\n${c.content}`).join('\n\n');
                 await setFullDraft(combined);
+            } else if (data.error === 'upgrade_required') {
+                setGenerateError('upgrade_required');
             } else if (data.error) {
-                alert(`원고 생성 실패: ${data.error}`);
+                setGenerateError(data.error);
             }
         } catch (error: any) {
             console.error('Draft generation failed:', error);
-            alert('원고 생성 중 예기치 못한 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            setGenerateError('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
         } finally {
             setIsGenerating(false);
         }
+    }
+
+    if (generateError) {
+        return (
+            <div className="min-h-screen bg-[#faf9f6] flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-red-500 text-2xl">✕</span>
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-800 mb-2">원고 생성 실패</h2>
+                <p className="text-slate-500 text-sm mb-6 max-w-sm">
+                    {generateError === 'upgrade_required'
+                        ? '무료 플랜에서는 원고를 1회만 생성할 수 있습니다. 구독 후 무제한으로 이용하세요.'
+                        : generateError}
+                </p>
+                <div className="flex gap-3">
+                    {generateError === 'upgrade_required' && (
+                        <Button onClick={() => router.push('/payment')} className="bg-amber-500 hover:bg-amber-600 rounded-full px-6">
+                            구독하기
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={() => { setGenerateError(null); generateDraft(); }} className="rounded-full px-6">
+                        다시 시도
+                    </Button>
+                </div>
+            </div>
+        );
     }
 
     if (isGenerating) {
