@@ -82,3 +82,23 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
 }
+
+// DELETE /api/feedback — delete feedback (admin only)
+export async function DELETE(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !isAdmin(session.user.email)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await req.json();
+    const { error } = await supabase
+        .from("beta_feedback")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+}
