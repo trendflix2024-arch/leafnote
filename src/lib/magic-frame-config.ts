@@ -1,0 +1,24 @@
+export const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_aGLExj/chat';
+export const SUPPORT_EMAIL = 'fms211215@gmail.com';
+
+// ── 함께 배송 가능한 상품 ──
+
+export interface MagicFrameProduct {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    emoji: string;
+}
+
+export const MAGIC_FRAME_PRODUCTS: MagicFrameProduct[] = [
+    { id: 'stand', name: '액자 거치대', description: '매직액자와 딱 맞는 원목 거치대', price: 12000, emoji: '🪵' },
+    { id: 'photocard-set', name: '포토카드 세트', description: '내 사진으로 만드는 포토카드 4장', price: 8000, emoji: '🃏' },
+    { id: 'gift-box', name: '선물 포장 세트', description: '리본 + 메시지 카드 + 고급 박스', price: 5000, emoji: '🎁' },
+    { id: 'cleaning-kit', name: '액자 관리 키트', description: '극세사 천 + 전용 클리너', price: 6000, emoji: '✨' },
+];
+
+// 서버 사이드 금액 검증용
+export const PRODUCT_PRICES: Record<string, number> = Object.fromEntries(
+    MAGIC_FRAME_PRODUCTS.map(p => [p.id, p.price])
+);

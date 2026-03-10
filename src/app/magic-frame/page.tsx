@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, Image, Layers, Type } from 'lucide-react';
+import { Sparkles, ArrowRight, Image, Layers, Type, Settings } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
 
 export default function MagicFrameLanding() {
@@ -65,6 +65,13 @@ export default function MagicFrameLanding() {
                     </Link>
                     <p className="text-xs text-slate-400 mt-4">간단한 본인 확인 후 바로 편집을 시작할 수 있어요</p>
                 </motion.div>
+
+                <div className="text-center mt-16">
+                    <Link href="/magic-frame/admin"
+                        className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-slate-500 transition-colors">
+                        <Settings size={12} /> 관리자
+                    </Link>
+                </div>
             </div>
         </MagicFrameLayout>
     );

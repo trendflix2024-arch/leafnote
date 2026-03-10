@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, ArrowRight, Loader2, AlertCircle, Mail, MessageCircle } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
+import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL } from '@/lib/magic-frame-config';
 
 function formatPhone(value: string) {
     const nums = value.replace(/[^0-9]/g, '').slice(0, 11);
@@ -77,11 +78,11 @@ export default function MagicFrameLogin() {
                                 사진 변경을 원하시면 아래 채널로 문의해 주세요.
                             </p>
                             <div className="flex flex-col gap-2 pt-2">
-                                <a href="http://pf.kakao.com/_aGLExj/chat" target="_blank" rel="noopener noreferrer"
+                                <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-400 text-white font-bold rounded-xl hover:bg-amber-500 transition-colors">
                                     <MessageCircle size={16} /> 카카오톡 채널 문의
                                 </a>
-                                <a href="mailto:fms211215@gmail.com"
+                                <a href={`mailto:${SUPPORT_EMAIL}`}
                                     className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">
                                     <Mail size={16} /> 이메일 문의
                                 </a>

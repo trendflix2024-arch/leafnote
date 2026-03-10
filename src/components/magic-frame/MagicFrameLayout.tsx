@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Sparkles, Mail, MessageCircle } from 'lucide-react';
+import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL } from '@/lib/magic-frame-config';
 
 export function MagicFrameLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -28,13 +29,13 @@ export function MagicFrameLayout({ children }: { children: React.ReactNode }) {
                 <div className="max-w-4xl mx-auto px-4 text-center space-y-3">
                     <p className="text-xs text-slate-400 font-medium">문의하기</p>
                     <div className="flex items-center justify-center gap-4">
-                        <a href="http://pf.kakao.com/_aGLExj/chat"
+                        <a href={KAKAO_CHANNEL_URL}
                             target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors">
                             <MessageCircle size={13} /> 카카오톡 채널
                         </a>
                         <span className="text-slate-200">|</span>
-                        <a href="mailto:fms211215@gmail.com"
+                        <a href={`mailto:${SUPPORT_EMAIL}`}
                             className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors">
                             <Mail size={13} /> 이메일 문의
                         </a>

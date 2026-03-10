@@ -24,9 +24,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '이미 제출된 사용자입니다.' }, { status: 400 });
         }
 
-        // Decode base64
+        // Decode base64 + size check (max 5MB)
         const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
+
+        if (buffer.byteLength > 5 * 1024 * 1024) {
+            return NextResponse.json({ error: '이미지 크기가 5MB를 초과합니다.' }, { status: 400 });
+        }
+
         const filename = `${user.name}_${user.phone}.jpg`;
 
         // Upload to Supabase Storage
