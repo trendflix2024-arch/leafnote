@@ -56,11 +56,11 @@ export default function MagicFrameComplete() {
                     <div className="bg-slate-50 rounded-2xl p-5 space-y-3 text-sm">
                         <p className="text-slate-500 font-medium">수정이 필요하신 경우 아래로 문의해 주세요</p>
                         <div className="flex flex-col gap-2">
-                            <a href="https://pf.kakao.com/_placeholder" target="_blank" rel="noopener noreferrer"
+                            <a href="http://pf.kakao.com/_aGLExj/chat" target="_blank" rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-400 text-white font-bold rounded-xl hover:bg-amber-500 transition-colors">
                                 <MessageCircle size={16} /> 카카오톡 채널 문의
                             </a>
-                            <a href="mailto:support@example.com"
+                            <a href="mailto:fms211215@gmail.com"
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-slate-600 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
                                 <Mail size={16} /> 이메일 문의
                             </a>

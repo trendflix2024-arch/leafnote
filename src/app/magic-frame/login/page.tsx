@@ -77,11 +77,11 @@ export default function MagicFrameLogin() {
                                 사진 변경을 원하시면 아래 채널로 문의해 주세요.
                             </p>
                             <div className="flex flex-col gap-2 pt-2">
-                                <a href="https://pf.kakao.com/_placeholder" target="_blank" rel="noopener noreferrer"
+                                <a href="http://pf.kakao.com/_aGLExj/chat" target="_blank" rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-400 text-white font-bold rounded-xl hover:bg-amber-500 transition-colors">
                                     <MessageCircle size={16} /> 카카오톡 채널 문의
                                 </a>
-                                <a href="mailto:support@example.com"
+                                <a href="mailto:fms211215@gmail.com"
                                     className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">
                                     <Mail size={16} /> 이메일 문의
                                 </a>
