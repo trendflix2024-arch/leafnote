@@ -1,0 +1,282 @@
+"use client";
+
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { ImagePlus, ZoomIn, Type, RotateCcw } from 'lucide-react';
+
+interface CropperProps {
+    onFinalize: (blob: Blob) => void;
+}
+
+const FONTS = [
+    { label: '본고딕 (기본)', value: 'sans-serif' },
+    { label: '나눔명조', value: '"Nanum Myeongjo", serif' },
+    { label: '세리프', value: 'Georgia, serif' },
+];
+
+const TEXT_COLORS = [
+    { label: '화이트', value: '#FFFFFF' },
+    { label: '블랙', value: '#000000' },
+    { label: '레드', value: '#EF4444' },
+    { label: '옐로우', value: '#FACC15' },
+];
+
+const TEXT_POSITIONS = [
+    { label: '상단', value: 'top' },
+    { label: '중앙', value: 'center' },
+    { label: '하단', value: 'bottom' },
+];
+
+export function PhotoCropper({ onFinalize }: CropperProps) {
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [ratio, setRatio] = useState<'3:4' | '4:3'>('3:4');
+    const [zoom, setZoom] = useState(100);
+    const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+
+    // Text overlay
+    const [text, setText] = useState('');
+    const [font, setFont] = useState('sans-serif');
+    const [textColor, setTextColor] = useState('#FFFFFF');
+    const [textPos, setTextPos] = useState('bottom');
+    const [textSize, setTextSize] = useState(24);
+
+    const fileRef = useRef<HTMLInputElement>(null);
+    const previewRef = useRef<HTMLDivElement>(null);
+
+    const isPortrait = ratio === '3:4';
+    const previewW = isPortrait ? 340 : 440;
+    const previewH = isPortrait ? Math.round(340 * 4 / 3) : 330;
+
+    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            setImageSrc(reader.result as string);
+            setZoom(100);
+            setPanOffset({ x: 0, y: 0 });
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const replaceImage = () => fileRef.current?.click();
+
+    // Pan handlers
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (!imageSrc) return;
+        setIsDragging(true);
+        dragStart.current = { x: e.clientX, y: e.clientY, ox: panOffset.x, oy: panOffset.y };
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    };
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging) return;
+        const dx = e.clientX - dragStart.current.x;
+        const dy = e.clientY - dragStart.current.y;
+        setPanOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy });
+    };
+    const handlePointerUp = () => setIsDragging(false);
+
+    const renderFinal = useCallback(async (): Promise<Blob | null> => {
+        if (!imageSrc) return null;
+
+        const outputW = isPortrait ? 900 : 1200;
+        const outputH = isPortrait ? 1200 : 900;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outputW;
+        canvas.height = outputH;
+        const ctx = canvas.getContext('2d')!;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, outputW, outputH);
+
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.crossOrigin = 'anonymous';
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = imageSrc;
+        });
+
+        // Scale factor from preview to output
+        const scaleX = outputW / previewW;
+        const scaleY = outputH / previewH;
+
+        const scale = zoom / 100;
+        const imgW = img.width;
+        const imgH = img.height;
+
+        // Cover fit: scale image to cover preview
+        const coverScale = Math.max(previewW / imgW, previewH / imgH) * scale;
+        const drawW = imgW * coverScale * scaleX;
+        const drawH = imgH * coverScale * scaleY;
+        const drawX = (outputW - drawW) / 2 + panOffset.x * scaleX;
+        const drawY = (outputH - drawH) / 2 + panOffset.y * scaleY;
+
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+        // Text overlay
+        if (text.trim()) {
+            const fontSize = textSize * scaleX;
+            ctx.font = `bold ${fontSize}px ${font}`;
+            ctx.textAlign = 'center';
+
+            // Shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = textColor;
+
+            let y = outputH / 2;
+            if (textPos === 'top') y = fontSize + 40;
+            if (textPos === 'bottom') y = outputH - 40;
+
+            ctx.fillText(text.trim(), outputW / 2, y);
+            ctx.shadowColor = 'transparent';
+        }
+
+        return new Promise(resolve => {
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.92);
+        });
+    }, [imageSrc, zoom, panOffset, text, font, textColor, textPos, textSize, isPortrait, previewW, previewH]);
+
+    const handleFinalize = async () => {
+        const blob = await renderFinal();
+        if (blob) onFinalize(blob);
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Preview area */}
+            <div className="flex justify-center">
+                <div ref={previewRef}
+                    className="rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm relative select-none"
+                    style={{ width: `${previewW}px`, height: `${previewH}px`, backgroundColor: '#1e293b', touchAction: 'none' }}
+                    onClick={() => !imageSrc && fileRef.current?.click()}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}>
+                    {imageSrc ? (
+                        <>
+                            <img src={imageSrc} alt="preview" draggable={false}
+                                className="absolute pointer-events-none"
+                                style={{
+                                    width: '100%', height: '100%',
+                                    objectFit: 'cover',
+                                    transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+                                    cursor: 'grab',
+                                }} />
+                            {text.trim() && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                                    style={{
+                                        alignItems: textPos === 'top' ? 'flex-start' : textPos === 'bottom' ? 'flex-end' : 'center',
+                                        padding: '20px',
+                                    }}>
+                                    <p style={{
+                                        fontFamily: font,
+                                        fontSize: `${textSize}px`,
+                                        color: textColor,
+                                        fontWeight: 'bold',
+                                        textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                                        textAlign: 'center',
+                                    }}>{text}</p>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+                            <ImagePlus size={48} className="text-slate-500 mb-3" />
+                            <p className="text-sm text-slate-400 font-medium">사진을 클릭하여 업로드하세요</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+
+            {/* Controls */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-5 max-w-lg mx-auto">
+                {/* Ratio + Replace */}
+                <div className="flex items-center gap-3">
+                    <div className="flex gap-2">
+                        {(['3:4', '4:3'] as const).map(r => (
+                            <button key={r} onClick={() => setRatio(r)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${ratio === r
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-white text-slate-600 border-slate-200'}`}>
+                                {r === '3:4' ? '3:4 (세로)' : '4:3 (가로)'}
+                            </button>
+                        ))}
+                    </div>
+                    <button onClick={replaceImage}
+                        className="ml-auto text-xs text-indigo-600 hover:underline font-medium">이미지 교체</button>
+                </div>
+
+                {/* Zoom */}
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                            <ZoomIn size={12} /> 확대/축소 (Zoom)
+                        </label>
+                        <span className="text-xs text-slate-400">{zoom}%</span>
+                    </div>
+                    <input type="range" min={100} max={300} value={zoom}
+                        onChange={e => setZoom(Number(e.target.value))}
+                        className="w-full accent-indigo-600" />
+                </div>
+
+                {/* Text */}
+                <div className="border-t border-slate-50 pt-4">
+                    <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                        <Type size={13} /> 텍스트 추가 (선택)
+                    </h4>
+                    <input value={text} onChange={e => setText(e.target.value)}
+                        placeholder="사진에 넣을 문구를 입력하세요"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none mb-3" />
+
+                    <div className="grid grid-cols-4 gap-3 text-xs">
+                        <div>
+                            <label className="text-slate-400 mb-1 block">서체</label>
+                            <select value={font} onChange={e => setFont(e.target.value)}
+                                className="w-full px-2 py-2 rounded-lg border border-slate-200 text-xs">
+                                {FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-slate-400 mb-1 block">색상</label>
+                            <div className="flex gap-1 flex-wrap">
+                                {TEXT_COLORS.map(c => (
+                                    <button key={c.value} onClick={() => setTextColor(c.value)}
+                                        className={`w-6 h-6 rounded-full border ${textColor === c.value ? 'ring-2 ring-indigo-500 ring-offset-1' : 'border-slate-200'}`}
+                                        style={{ backgroundColor: c.value }} title={c.label} />
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-slate-400 mb-1 block">위치</label>
+                            <select value={textPos} onChange={e => setTextPos(e.target.value)}
+                                className="w-full px-2 py-2 rounded-lg border border-slate-200 text-xs">
+                                {TEXT_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-slate-400 mb-1 block">크기</label>
+                            <input type="range" min={12} max={48} value={textSize}
+                                onChange={e => setTextSize(Number(e.target.value))}
+                                className="w-full accent-indigo-600" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Finalize */}
+                <button onClick={handleFinalize} disabled={!imageSrc}
+                    className="w-full py-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 hover:shadow-xl transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+                    선택 영역 크롭 및 저장
+                </button>
+            </div>
+        </div>
+    );
+}
