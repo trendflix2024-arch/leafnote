@@ -5,13 +5,22 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2, MessageCircle, Mail, Home, ShoppingBag, Loader2 } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
-import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL, MAGIC_FRAME_PRODUCTS, type MagicFrameProduct } from '@/lib/magic-frame-config';
+import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL, MAGIC_FRAME_PRODUCTS } from '@/lib/magic-frame-config';
 
 export default function MagicFrameComplete() {
     const router = useRouter();
     const [result, setResult] = useState<{ imageUrl: string; name: string } | null>(null);
     const [session, setSession] = useState<{ userId: string; name: string; phone: string } | null>(null);
     const [purchasingProduct, setPurchasingProduct] = useState<string | null>(null);
+    const [products, setProducts] = useState<typeof MAGIC_FRAME_PRODUCTS>([]);
+
+    useEffect(() => {
+        // Fetch products from DB (fallback to hardcoded)
+        fetch('/api/magic-frame/products')
+            .then(res => res.json())
+            .then(data => setProducts(data.products?.length ? data.products : MAGIC_FRAME_PRODUCTS))
+            .catch(() => setProducts(MAGIC_FRAME_PRODUCTS));
+    }, []);
 
     useEffect(() => {
         const raw = sessionStorage.getItem('magic_frame_result');
@@ -32,7 +41,7 @@ export default function MagicFrameComplete() {
         } catch {}
     }, [router]);
 
-    const handleProductPurchase = async (product: MagicFrameProduct) => {
+    const handleProductPurchase = async (product: typeof MAGIC_FRAME_PRODUCTS[0]) => {
         if (!session) {
             router.push('/magic-frame/login');
             return;
@@ -119,7 +128,7 @@ export default function MagicFrameComplete() {
                             <p className="text-xs text-slate-400">매직액자와 함께 받아보세요</p>
 
                             <div className="grid grid-cols-2 gap-3">
-                                {MAGIC_FRAME_PRODUCTS.map((product, i) => (
+                                {products.map((product, i) => (
                                     <motion.div
                                         key={product.id}
                                         initial={{ opacity: 0, y: 10 }}

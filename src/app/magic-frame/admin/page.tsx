@@ -9,6 +9,8 @@ import {
     CheckCircle2, Clock, X, RotateCcw, Trash2, ImageIcon,
     ShoppingBag, Package, Truck, XCircle, Users
 } from "lucide-react";
+import { ShippingTab } from "@/components/magic-frame/admin/ShippingTab";
+import { ProductsTab } from "@/components/magic-frame/admin/ProductsTab";
 
 interface MagicFrameUser {
     id: string;
@@ -48,7 +50,7 @@ const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "").split(",").map
 export default function MagicFrameAdminPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const [tab, setTab] = useState<"users" | "orders">("users");
+    const [tab, setTab] = useState<"users" | "orders" | "shipping" | "products">("users");
 
     // ── Users state ──
     const [users, setUsers] = useState<MagicFrameUser[]>([]);
@@ -231,10 +233,11 @@ export default function MagicFrameAdminPage() {
 
     const handleRefresh = () => {
         if (tab === "users") fetchUsers();
-        else fetchOrders();
+        else if (tab === "orders") fetchOrders();
+        // shipping tab handles its own refresh internally
     };
 
-    const isLoading = tab === "users" ? loading : ordersLoading;
+    const isLoading = tab === "users" ? loading : tab === "orders" ? ordersLoading : false;
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
@@ -247,7 +250,7 @@ export default function MagicFrameAdminPage() {
                         </div>
                         <div>
                             <h1 className="text-lg font-bold text-slate-800">매직액자 관리</h1>
-                            <p className="text-xs text-slate-400">제출 사진 · 주문 관리</p>
+                            <p className="text-xs text-slate-400">제출 사진 · 주문 · 배송 관리</p>
                         </div>
                     </div>
                     <button onClick={handleRefresh} disabled={isLoading}
@@ -270,6 +273,18 @@ export default function MagicFrameAdminPage() {
                                 ? "bg-white text-indigo-600 shadow-sm"
                                 : "text-slate-500 hover:text-slate-700"}`}>
                             <ShoppingBag size={14} /> 주문 관리
+                        </button>
+                        <button onClick={() => setTab("shipping")}
+                            className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold transition-all ${tab === "shipping"
+                                ? "bg-white text-indigo-600 shadow-sm"
+                                : "text-slate-500 hover:text-slate-700"}`}>
+                            <Truck size={14} /> 배송관리
+                        </button>
+                        <button onClick={() => setTab("products")}
+                            className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold transition-all ${tab === "products"
+                                ? "bg-white text-indigo-600 shadow-sm"
+                                : "text-slate-500 hover:text-slate-700"}`}>
+                            <Package size={14} /> 상품
                         </button>
                     </div>
                 </div>
@@ -533,6 +548,12 @@ export default function MagicFrameAdminPage() {
                         )}
                     </>
                 )}
+
+                {/* ═══════════ SHIPPING TAB ═══════════ */}
+                {tab === "shipping" && <ShippingTab />}
+
+                {/* ═══════════ PRODUCTS TAB ═══════════ */}
+                {tab === "products" && <ProductsTab />}
             </div>
 
             {/* ═══════════ MODALS ═══════════ */}

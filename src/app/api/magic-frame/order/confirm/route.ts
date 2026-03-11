@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { PRODUCT_PRICES, MAGIC_FRAME_PRODUCTS } from '@/lib/magic-frame-config';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { PRODUCT_PRICES } from '@/lib/magic-frame-config';
 
 export async function POST(req: NextRequest) {
     try {
@@ -10,14 +10,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '필수 데이터가 누락되었습니다.' }, { status: 400 });
         }
 
-        // 1. 금액 위변조 방지
-        const expectedPrice = PRODUCT_PRICES[productId];
+        // 1. 금액 위변조 방지 — DB 우선, 폴백으로 하드코딩
+        let expectedPrice: number | undefined;
+        let productName: string = productId;
+
+        const { data: dbProduct } = await supabaseAdmin
+            .from('magic_frame_products')
+            .select('price, name')
+            .eq('id', productId)
+            .eq('active', true)
+            .single();
+
+        if (dbProduct) {
+            expectedPrice = dbProduct.price;
+            productName = dbProduct.name;
+        } else {
+            expectedPrice = PRODUCT_PRICES[productId];
+        }
+
         if (!expectedPrice || Number(amount) !== expectedPrice) {
             return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 });
         }
 
         // 2. 사용자 존재 확인
-        const { data: user, error: userError } = await supabase
+        const { data: user, error: userError } = await supabaseAdmin
             .from('magic_frame_users')
             .select('id, name, phone')
             .eq('id', userId)
@@ -49,11 +65,10 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. 주문 저장
-        const product = MAGIC_FRAME_PRODUCTS.find(p => p.id === productId);
-        const { error: insertError } = await supabase.from('magic_frame_orders').insert({
+        const { error: insertError } = await supabaseAdmin.from('magic_frame_orders').insert({
             user_id: userId,
             product_id: productId,
-            product_name: product?.name || productId,
+            product_name: productName,
             amount: Number(amount),
             quantity: 1,
             toss_order_id: orderId,
@@ -68,7 +83,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '주문 저장 실패' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, productName: product?.name });
+        return NextResponse.json({ success: true, productName });
     } catch (e: any) {
         console.error('Order confirm error:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });

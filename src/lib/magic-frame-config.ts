@@ -18,6 +18,12 @@ export const MAGIC_FRAME_PRODUCTS: MagicFrameProduct[] = [
     { id: 'cleaning-kit', name: '액자 관리 키트', description: '극세사 천 + 전용 클리너', price: 6000, emoji: '✨' },
 ];
 
+// ── 택배사 목록 ──
+
+export const SHIPPING_CARRIERS = [
+    'CJ대한통운', '한진택배', '로젠택배', '우체국택배', '롯데택배', '경동택배',
+];
+
 // 서버 사이드 금액 검증용
 export const PRODUCT_PRICES: Record<string, number> = Object.fromEntries(
     MAGIC_FRAME_PRODUCTS.map(p => [p.id, p.price])

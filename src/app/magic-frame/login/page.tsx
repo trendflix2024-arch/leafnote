@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, ArrowRight, Loader2, AlertCircle, Mail, MessageCircle } from 'lucide-react';
+import { User, Phone, ArrowRight, Loader2, AlertCircle, Mail, MessageCircle, RotateCcw, Clock } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
 import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL } from '@/lib/magic-frame-config';
 
@@ -21,6 +21,57 @@ export default function MagicFrameLogin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [submittedUserId, setSubmittedUserId] = useState<string | null>(null);
+    const [submittedAt, setSubmittedAt] = useState<number | null>(null);
+    const [remainingSec, setRemainingSec] = useState(0);
+    const [resetting, setResetting] = useState(false);
+    const [resetError, setResetError] = useState('');
+
+    // Countdown timer
+    useEffect(() => {
+        if (!submittedAt) return;
+        const calc = () => {
+            const elapsed = Date.now() - submittedAt;
+            const remaining = Math.max(0, 30 * 60 * 1000 - elapsed);
+            setRemainingSec(Math.ceil(remaining / 1000));
+        };
+        calc();
+        const interval = setInterval(calc, 1000);
+        return () => clearInterval(interval);
+    }, [submittedAt]);
+
+    const canResubmit = remainingSec > 0;
+    const minutes = Math.floor(remainingSec / 60);
+    const seconds = remainingSec % 60;
+
+    const handleResubmit = useCallback(async () => {
+        if (!submittedUserId || !canResubmit) return;
+        setResetting(true);
+        setResetError('');
+        try {
+            const res = await fetch('/api/magic-frame/resubmit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: submittedUserId }),
+            });
+            const data = await res.json();
+            if (data.error) {
+                setResetError(data.error);
+                return;
+            }
+            // Save session and go to edit
+            sessionStorage.setItem('magic_frame_session', JSON.stringify({
+                userId: submittedUserId,
+                name: name.trim(),
+                phone: phone.replace(/[^0-9]/g, ''),
+            }));
+            router.push('/magic-frame/edit');
+        } catch {
+            setResetError('네트워크 오류가 발생했습니다.');
+        } finally {
+            setResetting(false);
+        }
+    }, [submittedUserId, canResubmit, name, phone, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,6 +91,10 @@ export default function MagicFrameLogin() {
             const data = await res.json();
 
             if (data.submitted) {
+                setSubmittedUserId(data.userId);
+                if (data.updatedAt) {
+                    setSubmittedAt(new Date(data.updatedAt).getTime());
+                }
                 setSubmitted(true);
                 return;
             }
@@ -75,8 +130,37 @@ export default function MagicFrameLogin() {
                             <h2 className="text-lg font-bold text-slate-800">이미 제출이 완료되었습니다</h2>
                             <p className="text-sm text-slate-500 leading-relaxed">
                                 사진이 확정되어 제작 중에 있습니다.<br />
-                                사진 변경을 원하시면 아래 채널로 문의해 주세요.
+                                {canResubmit
+                                    ? '아래 버튼을 눌러 다시 제출할 수 있습니다.'
+                                    : '사진 변경을 원하시면 아래 채널로 문의해 주세요.'}
                             </p>
+
+                            {/* 30분 카운트다운 & 다시 제출 버튼 */}
+                            {canResubmit && (
+                                <div className="space-y-3">
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full">
+                                        <Clock size={14} className="text-indigo-500" />
+                                        <span className="text-sm font-bold text-indigo-600 tabular-nums">
+                                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                                        </span>
+                                        <span className="text-xs text-indigo-400">남음</span>
+                                    </div>
+
+                                    {resetError && (
+                                        <p className="text-red-500 text-xs flex items-center justify-center gap-1">
+                                            <AlertCircle size={12} /> {resetError}
+                                        </p>
+                                    )}
+
+                                    <button onClick={handleResubmit} disabled={resetting}
+                                        className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                                        {resetting
+                                            ? <><Loader2 size={16} className="animate-spin" /> 처리 중...</>
+                                            : <><RotateCcw size={16} /> 다시 제출하기</>}
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="flex flex-col gap-2 pt-2">
                                 <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-400 text-white font-bold rounded-xl hover:bg-amber-500 transition-colors">

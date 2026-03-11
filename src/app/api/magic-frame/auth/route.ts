@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         // Check if user exists
         const { data: existing } = await supabase
             .from('magic_frame_users')
-            .select('id, submitted, image_url')
+            .select('id, submitted, image_url, updated_at')
             .eq('name', cleanName)
             .eq('phone', cleanPhone)
             .single();
@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
             if (existing.submitted) {
                 return NextResponse.json({
                     submitted: true,
+                    userId: existing.id,
+                    updatedAt: existing.updated_at,
                     message: '사진이 확정되어 제작 중에 있습니다. 사진 변경을 원하시면 이메일로 문의해 주세요.',
                 }, { status: 200 });
             }
