@@ -114,12 +114,8 @@ export default function MagicFrameAdminPage() {
         if (status === "loading") return;
         if (!isAdmin) { router.replace("/magic-frame"); return; }
         fetchUsers();
-    }, [status, isAdmin, router, fetchUsers]);
-
-    useEffect(() => {
-        if (!isAdmin) return;
-        if (tab === "orders") fetchOrders();
-    }, [tab, isAdmin, fetchOrders]);
+        fetchOrders();
+    }, [status, isAdmin, router, fetchUsers, fetchOrders]);
 
     // ── Users handlers ──
     const handleResetSubmission = async (userId: string) => {
@@ -223,6 +219,11 @@ export default function MagicFrameAdminPage() {
     });
     const submittedCount = users.filter(u => u.submitted).length;
     const pendingCount = users.filter(u => !u.submitted).length;
+
+    const ordersByUserId = orders.reduce<Record<string, MagicFrameOrder[]>>((acc, o) => {
+        (acc[o.user_id] ||= []).push(o);
+        return acc;
+    }, {});
 
     const paidOrders = orders.filter(o => o.status === "paid");
     const shippedOrders = orders.filter(o => o.status === "shipped");
@@ -370,6 +371,18 @@ export default function MagicFrameAdminPage() {
                                                             <Clock size={10} /> 미제출
                                                         </span>
                                                     )}
+                                                    {(() => {
+                                                        const userOrders = ordersByUserId[user.id];
+                                                        if (!userOrders || userOrders.length === 0) return null;
+                                                        const activeOrders = userOrders.filter(o => o.status !== "cancelled");
+                                                        if (activeOrders.length === 0) return null;
+                                                        const total = activeOrders.reduce((s, o) => s + o.amount, 0);
+                                                        return (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-full">
+                                                                <ShoppingBag size={10} /> {activeOrders.length}건 ₩{total.toLocaleString()}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <p className="text-xs text-slate-400">{formatPhone(user.phone)}</p>
                                                 <p className="text-[10px] text-slate-300 mt-0.5">
