@@ -178,8 +178,24 @@ export function PhotoCropper({ onFinalize }: CropperProps) {
     const renderFinal = useCallback(async (): Promise<Blob | null> => {
         if (!imageSrc) return null;
 
-        const outputW = isPortrait ? 900 : 1200;
-        const outputH = isPortrait ? 1200 : 900;
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.crossOrigin = 'anonymous';
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = imageSrc;
+        });
+
+        // Output size based on original image resolution
+        const targetRatio = isPortrait ? 3 / 4 : 4 / 3;
+        let outputW: number, outputH: number;
+        if (img.width / img.height > targetRatio) {
+            outputH = img.height;
+            outputW = Math.round(img.height * targetRatio);
+        } else {
+            outputW = img.width;
+            outputH = Math.round(img.width / targetRatio);
+        }
 
         const canvas = document.createElement('canvas');
         canvas.width = outputW;
@@ -188,14 +204,6 @@ export function PhotoCropper({ onFinalize }: CropperProps) {
 
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(0, 0, outputW, outputH);
-
-        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-            const i = new Image();
-            i.crossOrigin = 'anonymous';
-            i.onload = () => resolve(i);
-            i.onerror = reject;
-            i.src = imageSrc;
-        });
 
         // Scale factor from preview to output
         const scaleX = outputW / previewW;

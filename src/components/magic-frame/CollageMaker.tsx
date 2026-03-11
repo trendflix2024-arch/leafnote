@@ -124,8 +124,8 @@ export function CollageMaker({ onFinalize }: CollageProps) {
     const previewH = isPortrait ? Math.round(320 * 4 / 3) : 300;
 
     const renderCollage = useCallback(async (): Promise<Blob | null> => {
-        const outputW = isPortrait ? 900 : 1200;
-        const outputH = isPortrait ? 1200 : 900;
+        const outputW = isPortrait ? 2400 : 3200;
+        const outputH = isPortrait ? 3200 : 2400;
         const gap = spacing * 3;
 
         const canvas = document.createElement('canvas');
