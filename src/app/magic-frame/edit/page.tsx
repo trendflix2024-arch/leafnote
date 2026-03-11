@@ -162,8 +162,8 @@ export default function MagicFrameEditPage() {
                         </div>
 
                         {confirmedPreview && (
-                            <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md max-h-80 overflow-y-hidden">
-                                <img src={confirmedPreview} alt="확정된 사진" className="w-full object-cover" />
+                            <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md">
+                                <img src={confirmedPreview} alt="확정된 사진" className="w-full" />
                             </div>
                         )}
 
@@ -227,8 +227,8 @@ export default function MagicFrameEditPage() {
                             <p className="text-xs text-slate-400 mb-4">확정 후 발송 버튼을 눌러야 제출됩니다</p>
 
                             {pendingPreview && (
-                                <div className="rounded-xl overflow-hidden border border-slate-200 mb-5 max-h-64 overflow-y-hidden">
-                                    <img src={pendingPreview} alt="미리보기" className="w-full object-cover" />
+                                <div className="rounded-xl overflow-hidden border border-slate-200 mb-5">
+                                    <img src={pendingPreview} alt="미리보기" className="w-full" />
                                 </div>
                             )}
 

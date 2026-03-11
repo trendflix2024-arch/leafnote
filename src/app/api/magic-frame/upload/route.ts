@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get user info for filename
-        const { data: user, error: userError } = await supabase
+        const { data: user, error: userError } = await supabaseAdmin
             .from('magic_frame_users')
             .select('name, phone, submitted')
             .eq('id', userId)
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         const filename = `${user.name}_${user.phone}.jpg`;
 
         // Upload to Supabase Storage
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabaseAdmin.storage
             .from('magic-frame')
             .upload(filename, buffer, {
                 contentType: 'image/jpeg',
@@ -50,14 +50,14 @@ export async function POST(req: NextRequest) {
         }
 
         // Get public URL
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = supabaseAdmin.storage
             .from('magic-frame')
             .getPublicUrl(filename);
 
         const publicUrl = urlData.publicUrl;
 
         // Update user record
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
             .from('magic_frame_users')
             .update({
                 submitted: true,
