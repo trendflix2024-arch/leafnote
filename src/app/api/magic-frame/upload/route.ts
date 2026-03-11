@@ -36,6 +36,12 @@ export async function POST(req: NextRequest) {
 
         const filename = `${user.name}_${user.phone}.jpg`;
 
+        // Ensure bucket exists
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+        if (!buckets?.find(b => b.name === 'magic-frame')) {
+            await supabaseAdmin.storage.createBucket('magic-frame', { public: true });
+        }
+
         // Upload to Supabase Storage
         const { error: uploadError } = await supabaseAdmin.storage
             .from('magic-frame')
@@ -45,8 +51,8 @@ export async function POST(req: NextRequest) {
             });
 
         if (uploadError) {
-            console.error('Upload error:', uploadError);
-            return NextResponse.json({ error: '이미지 업로드에 실패했습니다.' }, { status: 500 });
+            console.error('Upload error:', JSON.stringify(uploadError));
+            return NextResponse.json({ error: `업로드 실패: ${uploadError.message}` }, { status: 500 });
         }
 
         // Get public URL
