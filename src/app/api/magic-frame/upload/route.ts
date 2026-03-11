@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '이미지 크기가 5MB를 초과합니다.' }, { status: 400 });
         }
 
-        const filename = `${user.name}_${user.phone}.jpg`;
+        const filename = `${userId}.jpg`;
 
         // Ensure bucket exists
         const { data: buckets } = await supabaseAdmin.storage.listBuckets();
