@@ -3,9 +3,12 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId, imageBase64, imageType } = await req.json();
+        const formData = await req.formData();
+        const userId = formData.get('userId') as string;
+        const imageType = (formData.get('imageType') as string) || 'single';
+        const file = formData.get('image') as File | null;
 
-        if (!userId || !imageBase64) {
+        if (!userId || !file) {
             return NextResponse.json({ error: '필수 데이터가 누락되었습니다.' }, { status: 400 });
         }
 
@@ -24,9 +27,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '이미 제출된 사용자입니다.' }, { status: 400 });
         }
 
-        // Decode base64 + size check (max 5MB)
-        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
+        // Size check (max 5MB)
+        const buffer = Buffer.from(await file.arrayBuffer());
 
         if (buffer.byteLength > 5 * 1024 * 1024) {
             return NextResponse.json({ error: '이미지 크기가 5MB를 초과합니다.' }, { status: 400 });
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
         const filename = `${user.name}_${user.phone}.jpg`;
 
         // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
             .from('magic-frame')
             .upload(filename, buffer, {
                 contentType: 'image/jpeg',
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
             .update({
                 submitted: true,
                 image_url: publicUrl,
-                image_type: imageType || 'single',
+                image_type: imageType,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', userId);

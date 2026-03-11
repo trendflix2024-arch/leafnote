@@ -66,20 +66,14 @@ export default function MagicFrameEditPage() {
         const timeout = setTimeout(() => controller.abort(), 30000);
 
         try {
-            const base64 = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(confirmedBlob);
-            });
+            const formData = new FormData();
+            formData.append('image', confirmedBlob, 'photo.jpg');
+            formData.append('userId', session.userId);
+            formData.append('imageType', confirmedType);
 
             const res = await fetch('/api/magic-frame/upload', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: session.userId,
-                    imageBase64: base64,
-                    imageType: confirmedType,
-                }),
+                body: formData,
                 signal: controller.signal,
             });
 
@@ -154,76 +148,73 @@ export default function MagicFrameEditPage() {
                 </div>
             </div>
 
-            {/* Editor or Confirmed Preview */}
-            <AnimatePresence mode="wait">
-                {confirmedBlob ? (
-                    /* Step 2: Photo confirmed — show preview + send button */
-                    <motion.div key="confirmed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                        className="max-w-md mx-auto px-4 py-8">
-                        <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 text-center space-y-5">
-                            <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                                <Check size={28} className="text-emerald-600" />
+            {/* Step 2: Photo confirmed — show preview + send button */}
+            {confirmedBlob && (
+                <motion.div key="confirmed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md mx-auto px-4 py-8">
+                    <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 text-center space-y-5">
+                        <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                            <Check size={28} className="text-emerald-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 mb-1">사진이 확정되었습니다</h3>
+                            <p className="text-xs text-slate-400">아래 미리보기를 확인 후 발송해 주세요</p>
+                        </div>
+
+                        {confirmedPreview && (
+                            <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md max-h-80 overflow-y-hidden">
+                                <img src={confirmedPreview} alt="확정된 사진" className="w-full object-cover" />
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-1">사진이 확정되었습니다</h3>
-                                <p className="text-xs text-slate-400">아래 미리보기를 확인 후 발송해 주세요</p>
-                            </div>
+                        )}
 
-                            {confirmedPreview && (
-                                <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md max-h-80 overflow-y-hidden">
-                                    <img src={confirmedPreview} alt="확정된 사진" className="w-full object-cover" />
-                                </div>
-                            )}
-
-                            {uploadError && (
-                                <div className="bg-red-50 rounded-xl p-3 space-y-2">
-                                    <p className="text-red-500 text-xs flex items-center justify-center gap-1">
-                                        <AlertCircle size={12} /> {uploadError}
-                                    </p>
-                                    <button onClick={handleSend}
-                                        className="text-xs text-red-600 font-bold hover:underline">
-                                        다시 시도
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="space-y-2 pt-2">
-                                <button onClick={handleSend} disabled={uploading}
-                                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2">
-                                    {uploading ? <><Loader2 size={16} className="animate-spin" /> 발송 중...</> : <><Send size={16} /> {uploadError ? '다시 발송하기' : '발송하기'}</>}
-                                </button>
-                                <button onClick={handleResetConfirmed} disabled={uploading}
-                                    className="w-full py-3 text-slate-500 font-medium rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
-                                    <ArrowLeft size={14} /> 다시 편집하기
+                        {uploadError && (
+                            <div className="bg-red-50 rounded-xl p-3 space-y-2">
+                                <p className="text-red-500 text-xs flex items-center justify-center gap-1">
+                                    <AlertCircle size={12} /> {uploadError}
+                                </p>
+                                <button onClick={handleSend}
+                                    className="text-xs text-red-600 font-bold hover:underline">
+                                    다시 시도
                                 </button>
                             </div>
+                        )}
+
+                        <div className="space-y-2 pt-2">
+                            <button onClick={handleSend} disabled={uploading}
+                                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                                {uploading ? <><Loader2 size={16} className="animate-spin" /> 발송 중...</> : <><Send size={16} /> {uploadError ? '다시 발송하기' : '발송하기'}</>}
+                            </button>
+                            <button onClick={handleResetConfirmed} disabled={uploading}
+                                className="w-full py-3 text-slate-500 font-medium rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                                <ArrowLeft size={14} /> 다시 편집하기
+                            </button>
                         </div>
-                    </motion.div>
-                ) : (
-                    /* Step 1: Editor */
-                    <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <div className="max-w-5xl mx-auto px-4 py-6">
-                            <AnimatePresence mode="wait">
-                                {tab === 'collage' && (
-                                    <motion.div key="collage" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-                                        <CollageMaker onFinalize={(blob) => handleFinalize(blob, 'collage')} />
-                                    </motion.div>
-                                )}
-                                {tab === 'crop' && (
-                                    <motion.div key="crop" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                                        <PhotoCropper onFinalize={(blob) => handleFinalize(blob, 'single')} />
-                                    </motion.div>
-                                )}
-                                {tab === 'gallery' && (
-                                    <motion.div key="gallery" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                                        <Gallery isAdmin={isAdmin} />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* Editor — always mounted, hidden when photo is confirmed */}
+            <div className={confirmedBlob ? 'hidden' : ''}>
+                <div className="max-w-5xl mx-auto px-4 py-6">
+                    <AnimatePresence mode="wait">
+                        {tab === 'collage' && (
+                            <motion.div key="collage" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                                <CollageMaker onFinalize={(blob) => handleFinalize(blob, 'collage')} />
+                            </motion.div>
+                        )}
+                        {tab === 'crop' && (
+                            <motion.div key="crop" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
+                                <PhotoCropper onFinalize={(blob) => handleFinalize(blob, 'single')} />
+                            </motion.div>
+                        )}
+                        {tab === 'gallery' && (
+                            <motion.div key="gallery" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
+                                <Gallery isAdmin={isAdmin} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </div>
 
             {/* Confirm popup (Step 1: 사진 확정) */}
             <AnimatePresence>
