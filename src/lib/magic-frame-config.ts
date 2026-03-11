@@ -9,6 +9,8 @@ export interface MagicFrameProduct {
     description: string;
     price: number;
     emoji: string;
+    image_url?: string | null;
+    detail_url?: string | null;
 }
 
 export const MAGIC_FRAME_PRODUCTS: MagicFrameProduct[] = [

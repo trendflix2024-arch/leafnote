@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { CheckCircle2, MessageCircle, Mail, Home, ShoppingBag, Loader2 } from 'lucide-react';
+import { CheckCircle2, MessageCircle, Mail, Home, ShoppingBag, Loader2, ExternalLink } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
 import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL, MAGIC_FRAME_PRODUCTS } from '@/lib/magic-frame-config';
 
@@ -136,21 +136,36 @@ export default function MagicFrameComplete() {
                                         transition={{ delay: 0.4 + i * 0.1 }}
                                         className="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center space-y-2"
                                     >
-                                        <div className="text-3xl">{product.emoji}</div>
+                                        {/* Product Image or Emoji */}
+                                        {product.image_url ? (
+                                            <div className="w-16 h-16 rounded-xl overflow-hidden mx-auto">
+                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                            </div>
+                                        ) : (
+                                            <div className="text-3xl">{product.emoji}</div>
+                                        )}
                                         <h4 className="text-sm font-bold text-slate-700">{product.name}</h4>
                                         <p className="text-[11px] text-slate-400 leading-tight">{product.description}</p>
                                         <p className="text-sm font-bold text-indigo-600">
                                             ₩{product.price.toLocaleString()}
                                         </p>
-                                        <button
-                                            onClick={() => handleProductPurchase(product)}
-                                            disabled={purchasingProduct !== null}
-                                            className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-1"
-                                        >
-                                            {purchasingProduct === product.id
-                                                ? <><Loader2 size={12} className="animate-spin" /> 처리 중...</>
-                                                : '구매하기'}
-                                        </button>
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                onClick={() => handleProductPurchase(product)}
+                                                disabled={purchasingProduct !== null}
+                                                className={`${product.detail_url ? 'flex-1' : 'w-full'} py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-1`}
+                                            >
+                                                {purchasingProduct === product.id
+                                                    ? <><Loader2 size={12} className="animate-spin" /> 처리 중...</>
+                                                    : '구매하기'}
+                                            </button>
+                                            {product.detail_url && (
+                                                <a href={product.detail_url} target="_blank" rel="noopener noreferrer"
+                                                    className="px-3 py-2 border border-indigo-200 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-0.5">
+                                                    <ExternalLink size={10} /> 자세히
+                                                </a>
+                                            )}
+                                        </div>
                                     </motion.div>
                                 ))}
                             </div>

@@ -7,7 +7,7 @@ export async function GET() {
     try {
         const { data: products, error } = await supabaseAdmin
             .from('magic_frame_products')
-            .select('id, name, description, price, emoji')
+            .select('id, name, description, price, emoji, image_url, detail_url')
             .eq('active', true)
             .order('sort_order', { ascending: true });
 

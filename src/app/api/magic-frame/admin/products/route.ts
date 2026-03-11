@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { id, name, description, price, emoji, active, sort_order } = await req.json();
+        const { id, name, description, price, emoji, active, sort_order, image_url, detail_url } = await req.json();
 
         if (!id?.trim() || !name?.trim() || !price) {
             return NextResponse.json({ error: 'ID, 이름, 가격은 필수입니다.' }, { status: 400 });
@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
             emoji: emoji || '📦',
             active: active !== false,
             sort_order: sort_order ?? 0,
+            image_url: image_url || null,
+            detail_url: detail_url || null,
         });
 
         if (error) {
@@ -80,7 +82,7 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: '상품 ID가 필요합니다.' }, { status: 400 });
         }
 
-        const allowedFields = ['name', 'description', 'price', 'emoji', 'active', 'sort_order'];
+        const allowedFields = ['name', 'description', 'price', 'emoji', 'active', 'sort_order', 'image_url', 'detail_url'];
         const updateData: Record<string, any> = {};
 
         for (const field of allowedFields) {

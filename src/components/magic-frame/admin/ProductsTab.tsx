@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Loader2, Plus, Pencil, Trash2, X, Check, AlertCircle,
-    Eye, EyeOff, ShoppingBag,
+    Eye, EyeOff, ShoppingBag, Upload, ExternalLink, ImageIcon,
 } from 'lucide-react';
 
 interface Product {
@@ -13,6 +13,8 @@ interface Product {
     description: string;
     price: number;
     emoji: string;
+    image_url: string | null;
+    detail_url: string | null;
     active: boolean;
     sort_order: number;
     created_at: string;
@@ -25,6 +27,8 @@ const emptyForm = {
     description: '',
     price: '',
     emoji: '📦',
+    image_url: '',
+    detail_url: '',
     active: true,
     sort_order: '0',
 };
@@ -39,6 +43,10 @@ export function ProductsTab() {
     const [editingId, setEditingId] = useState<string | null>(null); // null = create, string = edit
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
+
+    // Image upload
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageUploading, setImageUploading] = useState(false);
 
     // Delete confirm
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -66,6 +74,7 @@ export function ProductsTab() {
     const openCreate = () => {
         setEditingId(null);
         setForm({ ...emptyForm, sort_order: String(products.length) });
+        setImagePreview(null);
         setModalOpen(true);
     };
 
@@ -77,9 +86,12 @@ export function ProductsTab() {
             description: p.description || '',
             price: String(p.price),
             emoji: p.emoji,
+            image_url: p.image_url || '',
+            detail_url: p.detail_url || '',
             active: p.active,
             sort_order: String(p.sort_order),
         });
+        setImagePreview(p.image_url || null);
         setModalOpen(true);
     };
 
@@ -94,9 +106,10 @@ export function ProductsTab() {
 
         try {
             const isEdit = editingId !== null;
+            const common = { name: form.name, description: form.description, price: Number(form.price), emoji: form.emoji, image_url: form.image_url || null, detail_url: form.detail_url || null, active: form.active, sort_order: Number(form.sort_order) };
             const body = isEdit
-                ? { id: editingId, name: form.name, description: form.description, price: Number(form.price), emoji: form.emoji, active: form.active, sort_order: Number(form.sort_order) }
-                : { id: form.id.trim(), name: form.name, description: form.description, price: Number(form.price), emoji: form.emoji, active: form.active, sort_order: Number(form.sort_order) };
+                ? { id: editingId, ...common }
+                : { id: form.id.trim(), ...common };
 
             if (!isEdit && !form.id.trim()) {
                 setError('상품 ID는 필수입니다.');
@@ -118,6 +131,29 @@ export function ProductsTab() {
             setError('저장 중 오류가 발생했습니다.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleImageUpload = async (file: File) => {
+        setImageUploading(true);
+        setError('');
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('productId', editingId || form.id || `temp-${Date.now()}`);
+
+            const res = await fetch('/api/magic-frame/admin/products/image', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.error) { setError(data.error); return; }
+            setForm(prev => ({ ...prev, image_url: data.imageUrl }));
+            setImagePreview(data.imageUrl);
+        } catch {
+            setError('이미지 업로드 중 오류가 발생했습니다.');
+        } finally {
+            setImageUploading(false);
         }
     };
 
@@ -205,9 +241,13 @@ export function ProductsTab() {
                             animate={{ opacity: 1, y: 0 }}
                             className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${product.active ? 'border-slate-100' : 'border-slate-100 opacity-60'}`}>
                             <div className="flex items-center gap-4 p-4">
-                                {/* Emoji */}
-                                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-2xl flex-shrink-0">
-                                    {product.emoji}
+                                {/* Image or Emoji */}
+                                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                                    {product.image_url ? (
+                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        product.emoji
+                                    )}
                                 </div>
 
                                 {/* Info */}
@@ -225,6 +265,12 @@ export function ProductsTab() {
                                         <span className="text-sm font-bold text-indigo-600">₩{product.price.toLocaleString()}</span>
                                         <span className="text-[10px] text-slate-300">ID: {product.id}</span>
                                         <span className="text-[10px] text-slate-300">순서: {product.sort_order}</span>
+                                        {product.detail_url && (
+                                            <a href={product.detail_url} target="_blank" rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-0.5 text-[10px] text-indigo-400 hover:text-indigo-600">
+                                                <ExternalLink size={9} /> 상세
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
 
@@ -281,19 +327,53 @@ export function ProductsTab() {
                                     </div>
                                 )}
 
-                                <div className="flex gap-3">
-                                    <div className="w-20">
-                                        <label className="text-xs font-bold text-slate-500 mb-1.5 block">이모지</label>
-                                        <input value={form.emoji}
-                                            onChange={e => setForm(prev => ({ ...prev, emoji: e.target.value }))}
-                                            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-center text-lg focus:ring-2 focus:ring-indigo-300 outline-none" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-xs font-bold text-slate-500 mb-1.5 block">상품명</label>
-                                        <input value={form.name}
-                                            onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-                                            placeholder="상품 이름"
-                                            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                {/* Product Image Upload */}
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">상품 이미지 (1:1 비율)</label>
+                                    <div className="flex items-start gap-3">
+                                        <div
+                                            className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer hover:border-indigo-300 transition-colors flex-shrink-0 relative"
+                                            onClick={() => document.getElementById('product-image-input')?.click()}
+                                        >
+                                            {imageUploading ? (
+                                                <Loader2 size={20} className="animate-spin text-indigo-400" />
+                                            ) : imagePreview ? (
+                                                <img src={imagePreview} alt="미리보기" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="text-center">
+                                                    <ImageIcon size={20} className="text-slate-300 mx-auto" />
+                                                    <span className="text-[9px] text-slate-300 mt-0.5 block">업로드</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <input id="product-image-input" type="file" accept="image/*" className="hidden"
+                                            onChange={e => {
+                                                const f = e.target.files?.[0];
+                                                if (f) handleImageUpload(f);
+                                                e.target.value = '';
+                                            }} />
+                                        <div className="flex-1 space-y-1.5">
+                                            <div className="flex gap-2">
+                                                <div className="w-16">
+                                                    <label className="text-[10px] text-slate-400 block">이모지</label>
+                                                    <input value={form.emoji}
+                                                        onChange={e => setForm(prev => ({ ...prev, emoji: e.target.value }))}
+                                                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-center text-lg focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] text-slate-400 block">상품명</label>
+                                                    <input value={form.name}
+                                                        onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+                                                        placeholder="상품 이름"
+                                                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                                </div>
+                                            </div>
+                                            {imagePreview && (
+                                                <button type="button" onClick={() => { setImagePreview(null); setForm(prev => ({ ...prev, image_url: '' })); }}
+                                                    className="text-[10px] text-red-400 hover:text-red-600">이미지 제거</button>
+                                            )}
+                                            <p className="text-[10px] text-slate-300">이미지가 있으면 이모지 대신 표시됩니다</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -319,6 +399,18 @@ export function ProductsTab() {
                                             onChange={e => setForm(prev => ({ ...prev, sort_order: e.target.value }))}
                                             className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
                                     </div>
+                                </div>
+
+                                {/* Detail URL */}
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">
+                                        <span className="flex items-center gap-1"><ExternalLink size={11} /> 상세 페이지 URL</span>
+                                    </label>
+                                    <input value={form.detail_url}
+                                        onChange={e => setForm(prev => ({ ...prev, detail_url: e.target.value }))}
+                                        placeholder="https://example.com/product-detail"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                    <p className="text-[10px] text-slate-300 mt-1">입력 시 &apos;자세히&apos; 버튼이 표시됩니다</p>
                                 </div>
 
                                 <label className="flex items-center gap-2 cursor-pointer">
