@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     Search, ArrowUpDown, Loader2, Upload, Download, X,
-    Clock, Package, PackageCheck, Truck, AlertCircle,
+    Clock, Package, PackageCheck, Truck, AlertCircle, Trash2, ShoppingBag,
 } from 'lucide-react';
 import { CsvImportModal } from './CsvImportModal';
 import { BatchActionBar } from './BatchActionBar';
@@ -22,6 +22,20 @@ interface Counts {
     preparing: number;
     shipped: number;
     total: number;
+}
+
+function computeAddonStats(orders: UnifiedOrder[]) {
+    let totalRevenue = 0;
+    let paidCount = 0;
+    for (const o of orders) {
+        for (const a of o.addon_orders) {
+            if (a.status !== 'cancelled') {
+                totalRevenue += a.amount;
+            }
+            if (a.status === 'paid') paidCount++;
+        }
+    }
+    return { totalRevenue, paidCount };
 }
 
 export function OrdersTab() {
@@ -196,6 +210,12 @@ export function OrdersTab() {
         <>
             {/* Pipeline Filter Bar */}
             <div className="flex gap-2 overflow-x-auto pb-1">
+                <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`flex-shrink-0 bg-white rounded-xl px-4 py-3 border shadow-sm text-center transition-all min-w-[80px] ${statusFilter === 'all' ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+                    <p className="text-xl font-bold text-slate-800">{counts.total}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">전체</p>
+                </button>
                 {PIPELINE_KEYS.map(key => {
                     const cfg = PIPELINE_CONFIG[key];
                     const count = counts[key];
@@ -211,8 +231,28 @@ export function OrdersTab() {
                 })}
             </div>
 
+            {/* Addon Revenue Summary */}
+            {(() => {
+                const { totalRevenue, paidCount } = computeAddonStats(orders);
+                if (totalRevenue === 0 && !loading) return null;
+                return totalRevenue > 0 ? (
+                    <div className="flex items-center gap-4 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <ShoppingBag size={13} className="text-purple-500" />
+                            <span className="font-medium">추가 구매</span>
+                        </div>
+                        <span className="text-sm font-bold text-purple-600">₩{totalRevenue.toLocaleString()}</span>
+                        {paidCount > 0 && (
+                            <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-bold">
+                                미배송 {paidCount}건
+                            </span>
+                        )}
+                    </div>
+                ) : null;
+            })()}
+
             {/* Toolbar */}
-            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm space-y-3">
+            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2">
                     <div className="flex-1 relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -224,39 +264,14 @@ export function OrdersTab() {
                         className="flex items-center gap-1 px-3 py-2.5 text-xs font-medium text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap">
                         <ArrowUpDown size={12} /> {sort === 'recent' ? '최근순' : '이름순'}
                     </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="flex gap-1.5 flex-wrap">
-                        <button onClick={() => setStatusFilter('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${statusFilter === 'all'
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-200'}`}>
-                            전체 ({counts.total})
-                        </button>
-                        {PIPELINE_KEYS.map(key => {
-                            const cfg = PIPELINE_CONFIG[key];
-                            return (
-                                <button key={key} onClick={() => setStatusFilter(key)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${statusFilter === key
-                                        ? 'bg-indigo-600 text-white border-indigo-600'
-                                        : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-200'}`}>
-                                    {cfg.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="flex gap-1.5 flex-shrink-0">
-                        <button onClick={() => setCsvModalOpen(true)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
-                            <Upload size={12} /> <span className="hidden sm:inline">주소 업로드</span>
-                        </button>
-                        <button onClick={handleExport}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                            <Download size={12} /> <span className="hidden sm:inline">내보내기</span>
-                        </button>
-                    </div>
+                    <button onClick={() => setCsvModalOpen(true)}
+                        className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap">
+                        <Upload size={12} /> <span className="hidden sm:inline">고객 등록</span>
+                    </button>
+                    <button onClick={handleExport}
+                        className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap">
+                        <Download size={12} /> <span className="hidden sm:inline">내보내기</span>
+                    </button>
                 </div>
             </div>
 
@@ -357,7 +372,7 @@ export function OrdersTab() {
                         <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
                             className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl text-center">
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Truck size={20} className="text-red-500" />
+                                <Trash2 size={20} className="text-red-500" />
                             </div>
                             <h3 className="text-sm font-bold text-slate-800 mb-1">주문을 삭제하시겠습니까?</h3>
                             <p className="text-xs text-slate-400 mb-4">사용자 정보와 제출 사진이 모두 삭제됩니다</p>
@@ -366,7 +381,7 @@ export function OrdersTab() {
                                     className="flex-1 py-2.5 text-slate-500 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm">취소</button>
                                 <button onClick={() => confirmDelete && handleDelete(confirmDelete)} disabled={deleteLoading}
                                     className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors text-sm flex items-center justify-center gap-1">
-                                    {deleteLoading ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
+                                    {deleteLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                                     삭제
                                 </button>
                             </div>

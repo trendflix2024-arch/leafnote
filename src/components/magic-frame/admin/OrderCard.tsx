@@ -4,9 +4,10 @@ import { motion } from 'framer-motion';
 import {
     Clock, Package, PackageCheck, Truck, ImageIcon,
     MapPin, Hash, MessageSquare, ShoppingBag, Trash2,
-    ChevronDown, RotateCcw, Loader2,
+    ChevronDown, RotateCcw, Loader2, ExternalLink, Download,
 } from 'lucide-react';
 import { useState } from 'react';
+import { TRACKING_URLS } from '@/lib/magic-frame-config';
 
 // ── Types ──
 
@@ -110,7 +111,7 @@ export function OrderCard({
             animate={{ opacity: 1, y: 0 }}
             className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${selected ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-100'}`}
         >
-            <div className="flex items-start gap-3 p-4">
+            <div className="flex items-start gap-3 p-3 sm:p-4">
                 {/* Checkbox */}
                 <input type="checkbox" checked={selected}
                     onChange={() => onToggleSelect(order.id)}
@@ -163,19 +164,39 @@ export function OrderCard({
                     )}
 
                     {/* Tracking */}
-                    {order.tracking_number && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
-                            <Hash size={11} className="flex-shrink-0 text-slate-300" />
-                            {order.shipping_carrier && <span className="font-medium">{order.shipping_carrier}</span>}
-                            <span>{order.tracking_number}</span>
-                        </p>
-                    )}
+                    {order.tracking_number && (() => {
+                        const trackUrl = order.shipping_carrier
+                            ? (TRACKING_URLS[order.shipping_carrier] || '') + order.tracking_number
+                            : '';
+                        return (
+                            <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+                                <Hash size={11} className="flex-shrink-0 text-slate-300" />
+                                {order.shipping_carrier && <span className="font-medium">{order.shipping_carrier}</span>}
+                                {trackUrl ? (
+                                    <a href={trackUrl} target="_blank" rel="noopener noreferrer"
+                                        className="text-indigo-600 hover:underline flex items-center gap-0.5">
+                                        {order.tracking_number} <ExternalLink size={9} />
+                                    </a>
+                                ) : (
+                                    <span>{order.tracking_number}</span>
+                                )}
+                            </p>
+                        );
+                    })()}
 
                     {/* Memo */}
                     {order.shipping_memo && (
                         <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
                             <MessageSquare size={10} className="flex-shrink-0 text-slate-300" />
                             {order.shipping_memo}
+                        </p>
+                    )}
+
+                    {/* Shipped date */}
+                    {order.shipped_at && (
+                        <p className="text-[10px] text-emerald-500 mt-0.5 flex items-center gap-1">
+                            <Truck size={10} className="flex-shrink-0" />
+                            발송: {formatDate(order.shipped_at)}
                         </p>
                     )}
 
@@ -239,6 +260,26 @@ export function OrderCard({
                                 </>
                             )}
                         </div>
+                    )}
+
+                    {/* Download photo */}
+                    {order.image_url && (
+                        <button onClick={async () => {
+                            try {
+                                const res = await fetch(order.image_url!);
+                                const blob = await res.blob();
+                                const ext = order.image_url!.split('.').pop()?.split('?')[0] || 'jpg';
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${order.name}${order.phone}.${ext}`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            } catch { /* ignore */ }
+                        }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                            <Download size={12} />
+                        </button>
                     )}
 
                     {/* Detail */}

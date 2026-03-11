@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Check, Loader2, AlertCircle, Truck, RotateCcw,
-    Trash2, ShoppingBag, ImageIcon,
+    Trash2, ShoppingBag, ImageIcon, ExternalLink,
 } from 'lucide-react';
-import { SHIPPING_CARRIERS } from '@/lib/magic-frame-config';
+import { SHIPPING_CARRIERS, TRACKING_URLS } from '@/lib/magic-frame-config';
 import { type UnifiedOrder, type AddonOrder, PIPELINE_CONFIG, type PipelineStatus, STATUS_TO_SHIPPING, formatPhone, formatDate } from './OrderCard';
 
 const ADDON_STATUS: Record<string, { label: string; color: string }> = {
@@ -28,7 +28,7 @@ export function OrderDetailModal({
     order, onClose, onSave, onAddonStatusChange, onResetSubmission, onDelete,
 }: OrderDetailModalProps) {
     const [form, setForm] = useState({
-        shipping_status: '',
+        shipping_status: 'pending',
         address: '',
         postal_code: '',
         address_detail: '',
@@ -41,25 +41,24 @@ export function OrderDetailModal({
     const [addonLoading, setAddonLoading] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'reset' | 'delete' | null>(null);
+    const [lastOrderId, setLastOrderId] = useState<string | null>(null);
 
     // Sync form when order changes
-    const initForm = (o: UnifiedOrder) => {
+    if (order && order.id !== lastOrderId) {
+        setLastOrderId(order.id);
         setForm({
-            shipping_status: o.shipping_status || 'pending',
-            address: o.address || '',
-            postal_code: o.postal_code || '',
-            address_detail: o.address_detail || '',
-            tracking_number: o.tracking_number || '',
-            shipping_carrier: o.shipping_carrier || '',
-            shipping_memo: o.shipping_memo || '',
+            shipping_status: order.shipping_status || 'pending',
+            address: order.address || '',
+            postal_code: order.postal_code || '',
+            address_detail: order.address_detail || '',
+            tracking_number: order.tracking_number || '',
+            shipping_carrier: order.shipping_carrier || '',
+            shipping_memo: order.shipping_memo || '',
         });
         setError('');
         setConfirmAction(null);
-    };
-
-    // Re-init when order changes
-    if (order && form.shipping_status === '' && !saving) {
-        initForm(order);
+    } else if (!order && lastOrderId) {
+        setLastOrderId(null);
     }
 
     const handleSave = async () => {
@@ -211,10 +210,19 @@ export function OrderDetailModal({
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 mb-1 block">운송장 번호</label>
-                                    <input value={form.tracking_number}
-                                        onChange={e => setForm(prev => ({ ...prev, tracking_number: e.target.value }))}
-                                        placeholder="1234567890"
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                    <div className="flex gap-1.5">
+                                        <input value={form.tracking_number}
+                                            onChange={e => setForm(prev => ({ ...prev, tracking_number: e.target.value }))}
+                                            placeholder="1234567890"
+                                            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" />
+                                        {form.tracking_number && form.shipping_carrier && TRACKING_URLS[form.shipping_carrier] && (
+                                            <a href={`${TRACKING_URLS[form.shipping_carrier]}${form.tracking_number}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap">
+                                                조회 <ExternalLink size={11} />
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

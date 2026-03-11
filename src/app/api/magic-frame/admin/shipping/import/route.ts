@@ -28,11 +28,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '데이터가 없습니다.' }, { status: 400 });
         }
 
-        // Fetch all submitted users
+        // Fetch all users (not just submitted)
         const { data: users, error } = await supabaseAdmin
             .from('magic_frame_users')
-            .select('id, name, phone, shipping_status, address')
-            .eq('submitted', true);
+            .select('id, name, phone, shipping_status, address, submitted');
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,6 +57,7 @@ export async function POST(req: NextRequest) {
                 postal_code: (entry.postal_code || '').trim(),
                 address_detail: (entry.address_detail || '').trim(),
                 matched: !!matched,
+                isNew: !matched,
                 userId: matched?.id || null,
                 currentStatus: matched?.shipping_status || null,
                 alreadyHasAddress: !!matched?.address,
@@ -65,13 +65,14 @@ export async function POST(req: NextRequest) {
         });
 
         const matchedCount = results.filter((r: any) => r.matched).length;
+        const newCount = results.filter((r: any) => r.isNew).length;
 
         return NextResponse.json({
             results,
             summary: {
                 total: results.length,
                 matched: matchedCount,
-                unmatched: results.length - matchedCount,
+                newUsers: newCount,
             },
         });
     } catch (e: any) {
@@ -93,38 +94,70 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: '적용할 데이터가 없습니다.' }, { status: 400 });
         }
 
-        let successCount = 0;
+        let updatedCount = 0;
+        let createdCount = 0;
         const errors: string[] = [];
 
         for (const match of matches) {
-            const { userId, address, postal_code, address_detail } = match;
+            const { userId, name, phone, address, postal_code, address_detail, isNew } = match;
 
-            if (!userId || !address) {
-                errors.push(`${match.name || userId}: 필수 데이터 누락`);
-                continue;
-            }
+            if (isNew) {
+                // Create new user
+                if (!name || !phone) {
+                    errors.push(`${name || '이름없음'}: 필수 데이터 누락`);
+                    continue;
+                }
+                const { error } = await supabaseAdmin
+                    .from('magic_frame_users')
+                    .insert({
+                        name: name.trim(),
+                        phone: normalizePhone(phone),
+                        address: address || null,
+                        postal_code: postal_code || null,
+                        address_detail: address_detail || null,
+                        submitted: false,
+                        shipping_status: 'pending',
+                    });
 
-            const { error } = await supabaseAdmin
-                .from('magic_frame_users')
-                .update({
-                    address,
-                    postal_code: postal_code || null,
-                    address_detail: address_detail || null,
-                    shipping_status: 'new_order',
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', userId);
-
-            if (error) {
-                errors.push(`${match.name || userId}: ${error.message}`);
+                if (error) {
+                    errors.push(`${name}: ${error.message}`);
+                } else {
+                    createdCount++;
+                }
             } else {
-                successCount++;
+                // Update existing user
+                if (!userId) {
+                    errors.push(`${name || userId}: userId 누락`);
+                    continue;
+                }
+
+                const updateData: Record<string, any> = {
+                    updated_at: new Date().toISOString(),
+                };
+                if (address) {
+                    updateData.address = address;
+                    updateData.postal_code = postal_code || null;
+                    updateData.address_detail = address_detail || null;
+                }
+
+                const { error } = await supabaseAdmin
+                    .from('magic_frame_users')
+                    .update(updateData)
+                    .eq('id', userId);
+
+                if (error) {
+                    errors.push(`${name || userId}: ${error.message}`);
+                } else {
+                    updatedCount++;
+                }
             }
         }
 
         return NextResponse.json({
             success: true,
-            applied: successCount,
+            applied: updatedCount + createdCount,
+            created: createdCount,
+            updated: updatedCount,
             errors: errors.length > 0 ? errors : undefined,
         });
     } catch (e: any) {

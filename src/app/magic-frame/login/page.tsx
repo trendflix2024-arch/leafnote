@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, ArrowRight, Loader2, AlertCircle, Mail, MessageCircle, RotateCcw, Clock } from 'lucide-react';
+import { User, Phone, ArrowRight, Loader2, AlertCircle, Mail, MessageCircle, RotateCcw, Clock, Package } from 'lucide-react';
 import { MagicFrameLayout } from '@/components/magic-frame/MagicFrameLayout';
 import { KAKAO_CHANNEL_URL, SUPPORT_EMAIL } from '@/lib/magic-frame-config';
 
@@ -160,6 +160,16 @@ export default function MagicFrameLogin() {
                                     </button>
                                 </div>
                             )}
+
+                            {/* 주문 현황 보기 */}
+                            <button onClick={() => {
+                                sessionStorage.setItem('mf_name', name.trim());
+                                sessionStorage.setItem('mf_phone', phone.replace(/[^0-9]/g, ''));
+                                router.push('/magic-frame/track');
+                            }}
+                                className="w-full py-4 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+                                <Package size={16} /> 주문 현황 보기
+                            </button>
 
                             <div className="flex flex-col gap-2 pt-2">
                                 <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer"

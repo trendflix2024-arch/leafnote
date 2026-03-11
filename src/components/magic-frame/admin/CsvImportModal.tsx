@@ -21,6 +21,7 @@ interface CsvEntry {
 
 interface MatchResult extends CsvEntry {
     matched: boolean;
+    isNew: boolean;
     userId: string | null;
     currentStatus: string | null;
     alreadyHasAddress: boolean;
@@ -39,7 +40,7 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
     const [step, setStep] = useState<'upload' | 'preview' | 'done'>('upload');
     const [entries, setEntries] = useState<CsvEntry[]>([]);
     const [results, setResults] = useState<MatchResult[]>([]);
-    const [summary, setSummary] = useState<{ total: number; matched: number; unmatched: number } | null>(null);
+    const [summary, setSummary] = useState<{ total: number; matched: number; newUsers: number } | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [appliedCount, setAppliedCount] = useState(0);
@@ -130,18 +131,18 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
     };
 
     const handleApply = async () => {
-        const matches = results
-            .filter(r => r.matched && r.userId)
-            .map(r => ({
-                userId: r.userId,
-                name: r.name,
-                address: r.address,
-                postal_code: r.postal_code,
-                address_detail: r.address_detail,
-            }));
+        const matches = results.map(r => ({
+            userId: r.userId,
+            name: r.name,
+            phone: r.phone,
+            address: r.address,
+            postal_code: r.postal_code,
+            address_detail: r.address_detail,
+            isNew: r.isNew,
+        }));
 
         if (!matches.length) {
-            setError('적용할 매칭 결과가 없습니다.');
+            setError('적용할 데이터가 없습니다.');
             return;
         }
 
@@ -204,7 +205,7 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                         <div className="flex items-center justify-between p-5 border-b border-slate-100">
                             <div className="flex items-center gap-2">
                                 <FileSpreadsheet size={18} className="text-indigo-600" />
-                                <h3 className="text-base font-bold text-slate-800">주소 CSV 업로드</h3>
+                                <h3 className="text-base font-bold text-slate-800">고객 등록 / 주소 업로드</h3>
                             </div>
                             <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors">
                                 <X size={18} />
@@ -256,11 +257,11 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                                             </div>
                                             <div className="flex-1 bg-emerald-50 rounded-lg p-3 text-center">
                                                 <p className="text-lg font-bold text-emerald-600">{summary.matched}</p>
-                                                <p className="text-[10px] text-slate-400">매칭됨</p>
+                                                <p className="text-[10px] text-slate-400">기존 고객</p>
                                             </div>
-                                            <div className="flex-1 bg-red-50 rounded-lg p-3 text-center">
-                                                <p className="text-lg font-bold text-red-500">{summary.unmatched}</p>
-                                                <p className="text-[10px] text-slate-400">미매칭</p>
+                                            <div className="flex-1 bg-blue-50 rounded-lg p-3 text-center">
+                                                <p className="text-lg font-bold text-blue-600">{summary.newUsers}</p>
+                                                <p className="text-[10px] text-slate-400">신규 등록</p>
                                             </div>
                                         </div>
                                     )}
@@ -278,7 +279,7 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                                                 </thead>
                                                 <tbody>
                                                     {results.map((r, i) => (
-                                                        <tr key={i} className={`border-t border-slate-100 ${r.matched ? '' : 'bg-red-50/50'}`}>
+                                                        <tr key={i} className={`border-t border-slate-100 ${r.isNew ? 'bg-blue-50/50' : ''}`}>
                                                             <td className="px-3 py-2 font-medium text-slate-700">{r.name}</td>
                                                             <td className="px-3 py-2 text-slate-500">{formatPhone(r.phone)}</td>
                                                             <td className="px-3 py-2 text-slate-500 max-w-[140px] truncate">{r.address}</td>
@@ -289,7 +290,7 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                                                                         {r.alreadyHasAddress && <span className="text-[10px] text-amber-500 ml-1">덮어쓰기</span>}
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-red-400 text-[10px]">미매칭</span>
+                                                                    <span className="text-blue-500 text-[10px] font-bold">신규</span>
                                                                 )}
                                                             </td>
                                                         </tr>
@@ -307,8 +308,8 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                                     <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <CheckCircle2 size={28} className="text-emerald-600" />
                                     </div>
-                                    <h4 className="text-base font-bold text-slate-800 mb-1">주소 매칭 완료</h4>
-                                    <p className="text-sm text-slate-500">{appliedCount}건의 주소가 적용되었습니다</p>
+                                    <h4 className="text-base font-bold text-slate-800 mb-1">등록 완료</h4>
+                                    <p className="text-sm text-slate-500">{appliedCount}건이 처리되었습니다</p>
                                 </div>
                             )}
                         </div>
@@ -321,10 +322,10 @@ export function CsvImportModal({ open, onClose, onImportComplete }: CsvImportMod
                                         className="flex-1 py-3 text-slate-500 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm">
                                         다시 선택
                                     </button>
-                                    <button onClick={handleApply} disabled={loading || !summary?.matched}
+                                    <button onClick={handleApply} disabled={loading || !summary?.total}
                                         className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 text-sm">
                                         {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
-                                        {summary?.matched || 0}건 적용
+                                        {summary?.total || 0}건 적용
                                     </button>
                                 </>
                             )}

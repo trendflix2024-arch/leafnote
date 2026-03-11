@@ -26,6 +26,17 @@ export const SHIPPING_CARRIERS = [
     'CJ대한통운', '한진택배', '로젠택배', '우체국택배', '롯데택배', '경동택배',
 ];
 
+// ── 택배사별 배송조회 URL ──
+
+export const TRACKING_URLS: Record<string, string> = {
+    'CJ대한통운': 'https://trace.cjlogistics.com/next/tracking.html?wblNo=',
+    '한진택배': 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mession_type=1&wblnumText2=',
+    '로젠택배': 'https://www.ilogen.com/web/personal/trace/',
+    '우체국택배': 'https://service.epost.go.kr/trace.RetrieveDomRi498.postal?sid1=',
+    '롯데택배': 'https://www.lotteglogis.com/home/reservation/tracking/link?InvNo=',
+    '경동택배': 'https://kdexp.com/basicNew.kd?barcode=',
+};
+
 // 서버 사이드 금액 검증용
 export const PRODUCT_PRICES: Record<string, number> = Object.fromEntries(
     MAGIC_FRAME_PRODUCTS.map(p => [p.id, p.price])

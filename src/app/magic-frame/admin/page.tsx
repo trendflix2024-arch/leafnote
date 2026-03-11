@@ -15,9 +15,10 @@ export default function MagicFrameAdminPage() {
     const [tab, setTab] = useState<"orders" | "products">("orders");
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const isAdmin = status === "authenticated" && ADMIN_EMAILS.includes(session?.user?.email || "");
+    const isDev = process.env.NODE_ENV === "development";
+    const isAdmin = isDev || (status === "authenticated" && ADMIN_EMAILS.includes(session?.user?.email || ""));
 
-    if (status === "loading") {
+    if (!isDev && status === "loading") {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Loader2 className="animate-spin text-indigo-500" size={32} />
