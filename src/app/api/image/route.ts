@@ -1,5 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+
+export const maxDuration = 60;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || '');
@@ -10,18 +13,36 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { title, author, concept, frontDesc, spineDesc, backDesc } = await req.json();
+    const { title, author, concept, frontDesc, spineDesc, backDesc, visualStyle, moodTone } = await req.json();
+
+    // Map style/mood keys to English prompt fragments for image generation
+    const STYLE_PROMPTS: Record<string, string> = {
+      minimalist: 'minimalist, clean whitespace, single focal object, modern simplicity',
+      illustration: 'warm watercolor illustration, hand-drawn, soft textures, emotional artwork',
+      photographic: 'cinematic photography, high-resolution, dramatic lighting, realistic',
+      vintage: 'vintage retro, aged paper texture, classic color palette, nostalgic, faded tones',
+      typographic: 'typography-focused, bold font composition, color contrast, abstract geometric, no complex imagery',
+    };
+    const MOOD_PROMPTS: Record<string, string> = {
+      warm: 'pastel tones, warm sunset light, soft curves, gentle atmosphere',
+      serious: 'monochrome, dark background, strong contrast, dramatic shadows',
+      bright: 'vivid colors, pop art influence, energetic composition, cheerful',
+      dreamy: 'cosmic, night sky, watercolor bleed effect, surreal, ethereal glow',
+    };
+
+    const styleInstruction = visualStyle ? `\n      시각적 스타일: ${STYLE_PROMPTS[visualStyle] || visualStyle}` : '';
+    const moodInstruction = moodTone ? `\n      분위기 톤: ${MOOD_PROMPTS[moodTone] || moodTone}` : '';
 
     // Use gemini-pro for design parameter generation
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
       당신은 수석 출판 북 디자이너입니다. 사용자가 입력한 내용을 바탕으로 세련된 3D 책 표지 디자인 명세서를 작성해야 합니다.
-      
+
       [도서 정보]
       제목: "${title}"
       저자: "${author}"
-      핵심 컨셉 및 분위기: "${concept}"
+      핵심 컨셉 및 분위기: "${concept}"${styleInstruction}${moodInstruction}
       앞면 요구사항: "${frontDesc}"
       책등 요구사항: "${spineDesc}"
       뒷면 요구사항: "${backDesc}"
@@ -47,7 +68,7 @@ export async function POST(req: Request) {
           "backBlurb": "뒷면에 들어갈 2~3문장의 감성적인 추천사 또는 책 소개말",
           "spineTitle": "책등에 들어갈 세로형 제목 (줄바꿈 없이 짧게)"
         },
-        "imagePrompt": "A highly detailed, aesthetic English prompt for a text-to-image AI to generate the book cover background. Must NOT contain any text or words. Describe the visual elements, lighting, mood, color palette, and art style. Example: 'A serene pastel watercolor painting of cherry blossoms gently falling in a warm spring breeze, soft glowing light, ethereal atmosphere, minimalist composition, masterpiece, 8k resolution, highly detailed.'"
+        "imagePrompt": "A highly detailed, aesthetic English prompt for a text-to-image AI to generate the book cover background. Must NOT contain any text or words. Describe the visual elements, lighting, mood, color palette, and art style.${visualStyle ? ` MUST reflect the visual style: ${STYLE_PROMPTS[visualStyle]}.` : ''}${moodTone ? ` MUST reflect the mood: ${MOOD_PROMPTS[moodTone]}.` : ''} Example: 'A serene pastel watercolor painting of cherry blossoms gently falling in a warm spring breeze, soft glowing light, ethereal atmosphere, minimalist composition, masterpiece, 8k resolution, highly detailed.'"
       }
     `;
 
@@ -70,7 +91,70 @@ export async function POST(req: Request) {
       };
     }
 
-    return NextResponse.json({ designParams, success: true });
+    // Generate cover image using Replicate FLUX
+    let imageUrl: string | null = null;
+    const REPLICATE_TOKEN = process.env.REPLICATE_API_TOKEN;
+    if (designParams.imagePrompt && REPLICATE_TOKEN) {
+      try {
+        const createRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${REPLICATE_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: {
+              prompt: `${designParams.imagePrompt.slice(0, 500)}, book cover background art, no text, no letters, no words`,
+              aspect_ratio: '3:4',
+              num_outputs: 1,
+            }
+          }),
+        });
+        const prediction = await createRes.json();
+        if (prediction.id) {
+          // Poll for completion (max ~40s)
+          for (let i = 0; i < 20; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+              headers: { 'Authorization': `Bearer ${REPLICATE_TOKEN}` },
+            });
+            const result = await pollRes.json();
+            if (result.status === 'succeeded' && result.output?.[0]) {
+              // Upload to Supabase Storage for permanent URL
+              try {
+                const imgRes = await fetch(result.output[0]);
+                const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+                const filename = `covers/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+                const { error: uploadError } = await supabaseAdmin.storage
+                  .from('cover-images')
+                  .upload(filename, imgBuffer, { contentType: 'image/webp', upsert: true });
+                if (!uploadError) {
+                  const { data: urlData } = supabaseAdmin.storage
+                    .from('cover-images')
+                    .getPublicUrl(filename);
+                  imageUrl = urlData.publicUrl;
+                } else {
+                  console.error('Supabase Storage upload failed:', uploadError);
+                  imageUrl = result.output[0]; // fallback to Replicate URL
+                }
+              } catch (uploadErr) {
+                console.error('Image upload failed, using Replicate URL:', uploadErr);
+                imageUrl = result.output[0]; // fallback to Replicate URL
+              }
+              break;
+            }
+            if (result.status === 'failed' || result.status === 'canceled') {
+              console.error('Replicate prediction failed:', result.error);
+              break;
+            }
+          }
+        }
+      } catch (imgErr: any) {
+        console.error('Replicate image generation failed:', imgErr.message || imgErr);
+      }
+    }
+
+    return NextResponse.json({ designParams, imageUrl, success: true });
   } catch (error: any) {
     console.error('3D Design generation error:', error);
     return NextResponse.json({ error: error.message || 'Failed to generate design' }, { status: 500 });

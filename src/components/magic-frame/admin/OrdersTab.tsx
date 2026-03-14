@@ -7,6 +7,7 @@ import {
     Clock, Package, PackageCheck, Truck, AlertCircle, Trash2, ShoppingBag,
 } from 'lucide-react';
 import { CsvImportModal } from './CsvImportModal';
+import { TrackingImportModal } from './TrackingImportModal';
 import { BatchActionBar } from './BatchActionBar';
 import { OrderCard, type UnifiedOrder, PIPELINE_CONFIG, type PipelineStatus, formatPhone } from './OrderCard';
 import { OrderDetailModal } from './OrderDetailModal';
@@ -54,6 +55,7 @@ export function OrdersTab() {
 
     // Modals
     const [csvModalOpen, setCsvModalOpen] = useState(false);
+    const [trackingModalOpen, setTrackingModalOpen] = useState(false);
     const [detailOrder, setDetailOrder] = useState<UnifiedOrder | null>(null);
     const [lightbox, setLightbox] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -268,6 +270,10 @@ export function OrdersTab() {
                         className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap">
                         <Upload size={12} /> <span className="hidden sm:inline">고객 등록</span>
                     </button>
+                    <button onClick={() => setTrackingModalOpen(true)}
+                        className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors whitespace-nowrap">
+                        <Upload size={12} /> <span className="hidden sm:inline">운송장</span>
+                    </button>
                     <button onClick={handleExport}
                         className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap">
                         <Download size={12} /> <span className="hidden sm:inline">내보내기</span>
@@ -334,6 +340,7 @@ export function OrdersTab() {
 
             {/* CSV Import Modal */}
             <CsvImportModal open={csvModalOpen} onClose={() => setCsvModalOpen(false)} onImportComplete={fetchOrders} />
+            <TrackingImportModal open={trackingModalOpen} onClose={() => setTrackingModalOpen(false)} onImportComplete={fetchOrders} />
 
             {/* Order Detail Modal */}
             <OrderDetailModal

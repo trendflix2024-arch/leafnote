@@ -102,12 +102,9 @@ export function OrderDetailModal({
     };
 
     const getResetInfo = () => {
-        if (!order?.submitted || !order.updated_at) return { canReset: false, remaining: '' };
-        const elapsed = Date.now() - new Date(order.updated_at).getTime();
-        const limit = 30 * 60 * 1000;
-        if (elapsed > limit) return { canReset: false, remaining: '만료' };
-        const left = Math.ceil((limit - elapsed) / 60000);
-        return { canReset: true, remaining: `${left}분 남음` };
+        if (!order?.submitted) return { canReset: false, reason: '' };
+        if (order.unified_status !== 'received') return { canReset: false, reason: '제작중 이후 불가' };
+        return { canReset: true, reason: '' };
     };
 
     return (
@@ -278,14 +275,14 @@ export function OrderDetailModal({
                                 <label className="text-xs font-bold text-slate-500 mb-1.5 block">사용자 관리</label>
                                 <div className="flex gap-2">
                                     {order.submitted && (() => {
-                                        const { canReset, remaining } = getResetInfo();
+                                        const { canReset, reason } = getResetInfo();
                                         return (
                                             <button onClick={() => setConfirmAction('reset')}
                                                 disabled={!canReset || actionLoading}
                                                 className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors disabled:opacity-40">
                                                 <RotateCcw size={12} />
                                                 재제출 허용
-                                                {canReset && <span className="text-[10px] text-indigo-400">({remaining})</span>}
+                                                {!canReset && reason && <span className="text-[10px] text-slate-400">({reason})</span>}
                                             </button>
                                         );
                                     })()}

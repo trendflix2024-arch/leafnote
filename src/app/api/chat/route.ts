@@ -23,7 +23,9 @@ export async function POST(request: Request) {
             userName,
             isInitial,
             projectTitle,
-            track = 'casual'
+            track = 'casual',
+            chapterTitle,
+            chapterExcerpt,
         } = body;
 
         // Build Claude message history from the conversation
@@ -45,7 +47,7 @@ export async function POST(request: Request) {
                     if (msg.role === 'assistant') {
                         validHistory.push({
                             role: 'user',
-                            content: track === 'casual' ? '안녕 에코?' : '인터뷰를 시작하고 싶어요.'
+                            content: track === 'casual' ? '안녕 에코?' : track === 'chapter-expand' ? '챕터 인터뷰를 시작하고 싶어요.' : '인터뷰를 시작하고 싶어요.'
                         });
                     }
                     validHistory.push(msg);
@@ -81,6 +83,24 @@ export async function POST(request: Request) {
 2. 지난번 대화의 키워드를 언급하며 반갑게 맞이해도 좋아. 
 3. 답변은 반드시 **3문장 이내**로 짧고 따뜻하게 해줘.
 4. **(중요)** 여기서는 절대 무겁게 인터뷰를 하거나 책을 쓰자고 부담 주지 마. 가벼운 수다에만 집중해.`;
+        } else if (track === 'chapter-expand') {
+            const turnCount = claudeMessages.filter(m => m.role === 'user').length;
+            systemPrompt = `너는 작가님의 책을 함께 써내려가는 '따뜻한 글쓰기 도우미 에코'야.
+지금 작가님은 [${projectTitle}]이라는 책의 [${chapterTitle || '이 챕터'}] 부분을 더 풍부하게 만들고 싶어.
+
+[현재 챕터 내용 일부]
+${chapterExcerpt || '(내용 없음)'}
+
+[미션]
+이 챕터의 주제와 관련된 구체적인 기억, 감정, 에피소드를 끌어내는 질문을 3~5개 이어나가세요.
+현재 ${turnCount}번째 질문 중입니다.
+
+[규칙]
+1. 한 번에 질문은 단 하나만. 짧고 구체적이고 다정하게.
+2. 답변은 반드시 3문장 이내로. 공감 한 줄 + 질문 한 줄.
+3. 이미 위 챕터 내용에 있는 정보는 다시 묻지 마세요.
+4. 말투: 따뜻하고 편안하게. 작가님이 부담 없이 답할 수 있는 분위기.
+5. 3~5개의 질문이 끝나면 "이제 이 이야기들을 챕터에 담아볼까요?" 라고 자연스럽게 마무리해 주세요.`;
         } else {
             // Interview track
             const writingsContext = context && Array.isArray(context)
@@ -91,8 +111,15 @@ export async function POST(request: Request) {
                 `).join('\n\n')
                 : "아직 작성된 글이 없습니다.";
 
-            systemPrompt = `너는 작가님의 삶을 한 권의 책으로 엮어내는 '따뜻한 인터뷰어 에코'야. 
+            const turnCount = claudeMessages.filter(m => m.role === 'user').length;
+            systemPrompt = `너는 작가님의 삶을 한 권의 책으로 엮어내는 '따뜻한 인터뷰어 에코'야.
 현재 진행 중인 인터뷰 주제는 [${projectTitle}]입니다.
+[인터뷰 구조 - 현재 ${turnCount}번째 질문]
+이번 인터뷰는 총 15~20개의 질문으로 완성됩니다.
+- 초반(1~5번): 편안한 배경 질문으로 시작
+- 중반(6~15번): 구체적인 에피소드와 감정을 깊이 있게 파고들기
+- 마무리(16~20번): 자연스럽게 결론과 의미를 정리하는 질문
+현재 단계에 맞는 질문 깊이를 유지하세요.
 [미션]
 1. 주어진 주제([${projectTitle}])에 알맞는 작가님의 과거 기억, 감정, 에피소드를 다정하게 질문해 주세요.
 2. 일상적인 수다보다는 작가님의 서사를 깊이 있게 끌어내는 데 집중해.
@@ -111,6 +138,10 @@ ${writingsContext}`;
             userPrompt = isInitial
                 ? "작가님께 반가운 첫 인사를 건네줘. 오늘 하루 어떠신지도 물어봐줘."
                 : (currentMessage || "안녕 에코?");
+        } else if (track === 'chapter-expand') {
+            userPrompt = isInitial
+                ? `작가님이 방금 입장했어요. [${chapterTitle || '이 챕터'}]에 대해 더 풀어낼 기억을 찾아드릴 거예요. 반갑게 인사하고, 첫 번째 질문을 딱 하나만 던져주세요.`
+                : (currentMessage || '계속해주세요.');
         } else {
             userPrompt = isInitial
                 ? `작가님이 방금 입장했습니다. 이번 인터뷰의 대주제는 '${projectTitle}' 입니다. 반갑게 첫 인사를 건네고, 이 주제에 맞춰서 대답하기 아주 쉬운 간단한 첫 질문을 딱 하나만 던져주세요.`
@@ -123,10 +154,10 @@ ${writingsContext}`;
         // Call Claude with streaming
         const stream = anthropic.messages.stream({
             model: 'claude-sonnet-4-20250514',
-            max_tokens: track === 'casual' ? 500 : 1000,
+            max_tokens: track === 'casual' ? 500 : track === 'chapter-expand' ? 600 : 1000,
             system: systemPrompt,
             messages: claudeMessages,
-            temperature: track === 'casual' ? 0.8 : 0.7,
+            temperature: track === 'casual' ? 0.8 : track === 'chapter-expand' ? 0.75 : 0.7,
         });
 
         // Return streaming response

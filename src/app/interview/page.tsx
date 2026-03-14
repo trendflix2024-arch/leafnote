@@ -40,13 +40,14 @@ export default function InterviewPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const currentProject = useCurrentProject();
-    const { tempOnboardingData, createProject, setTempOnboardingData, isSyncing } = useBookStore();
+    const { tempOnboardingData, createProject, setTempOnboardingData, isSyncing, setCoverDesign } = useBookStore();
     const { speak, stop, isSpeaking, isLoading: ttsLoading, autoSpeak, toggleAutoSpeak } = useTTS();
 
     const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
     const [speechError, setSpeechError] = useState<string | null>(null);
     const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+    const [continueAfterComplete, setContinueAfterComplete] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
     const autoSpeakRef = useRef(autoSpeak);
@@ -68,6 +69,10 @@ export default function InterviewPage() {
                     : tempOnboardingData.topic;
 
                 await createProject(title);
+                // Save topic to coverDesign for interior layout auto-preset
+                if (tempOnboardingData.topic) {
+                    await setCoverDesign({ topic: tempOnboardingData.topic });
+                }
                 // Clear temp data once project is created
                 setTempOnboardingData(null);
             } else if (status === 'authenticated' && !currentProject && !tempOnboardingData) {
@@ -222,7 +227,7 @@ export default function InterviewPage() {
 
     // Progress calculation: Unified with Dashboard
     // ~66 turns for 100% OR 5000 chars for 100% (or a mix)
-    const interviewProgress = Math.min(Math.round(userMsgCount * 1.5 + totalChars / 50), 100);
+    const interviewProgress = Math.min(Math.round(userMsgCount * 5 + totalChars / 100), 100);
 
     return (
         <div className="flex flex-col h-screen bg-[#FAF9F6] paper-texture">
@@ -407,7 +412,7 @@ export default function InterviewPage() {
                         </div>
                     )}
 
-                    {interviewProgress >= 100 && !isLoading && (
+                    {interviewProgress >= 100 && !isLoading && !continueAfterComplete && (
                         <motion.div
                             initial={{ opacity: 0, y: 20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -430,6 +435,12 @@ export default function InterviewPage() {
                                 자라난 나무(원고) 다듬기
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
+                            <button
+                                onClick={() => setContinueAfterComplete(true)}
+                                className="mt-4 text-sm text-emerald-600/70 hover:text-emerald-700 underline underline-offset-4 transition-colors relative z-10"
+                            >
+                                조금 더 이야기하고 싶어요
+                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -442,7 +453,7 @@ export default function InterviewPage() {
 
             {/* Footer Input - Optimized for mobile reach */}
             <footer className="p-3 md:p-8 bg-white/80 backdrop-blur-md border-t border-paper-edge relative pb-safe">
-                {interviewProgress >= 100 && (
+                {interviewProgress >= 100 && !continueAfterComplete && (
                     <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
                         <p className="text-[11px] md:text-sm font-bold text-emerald-800 bg-white px-4 py-2 rounded-full shadow-sm border border-emerald-100 flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />

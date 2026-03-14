@@ -278,10 +278,26 @@ export default function DashboardPage() {
     const totalChapters = activeProjects.reduce((acc: number, p: Project) => acc + (p.fullDraft ? (p.fullDraft.split('---').length - 1) : 0), 0);
 
     const calculateProgress = (project: Project) => {
-        const turns = project.interviewData.length;
-        const chars = project.interviewData.reduce((sum, step) => sum + (step.answer?.length || 0), 0);
-        // Requirement for 100%: ~40 turns OR ~4000 characters
-        return Math.min(Math.round(turns * 1.5 + chars / 50), 100);
+        let progress = 0;
+        const turns = project.interviewData?.length || 0;
+        const hasDraft = !!project.fullDraft?.trim();
+        const interviewComplete = (project.interviewStage || 0) >= 5;
+
+        // 인터뷰 시작 (10%)
+        if (turns > 0) progress += 10;
+        // 인터뷰 진행도 (최대 40%)
+        progress += Math.min(Math.round(turns / 20 * 40), 40);
+        // 인터뷰 완료 (20%)
+        if (interviewComplete) progress += 20;
+        // 원고 생성 완료 (20%)
+        if (hasDraft) progress += 20;
+        // 원고 분량 (최대 10%)
+        if (hasDraft) {
+            const draftLen = project.fullDraft!.length;
+            progress += Math.min(Math.round(draftLen / 5000 * 10), 10);
+        }
+
+        return Math.min(progress, 100);
     };
 
     const handleLogout = async () => {

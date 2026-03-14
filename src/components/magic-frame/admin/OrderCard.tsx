@@ -109,7 +109,7 @@ export function OrderCard({
         <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${selected ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-100'}`}
+            className={`bg-white rounded-xl border shadow-sm transition-colors ${selected ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-100'}`}
         >
             <div className="flex items-start gap-3 p-3 sm:p-4">
                 {/* Checkbox */}

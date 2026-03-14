@@ -17,7 +17,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 금액 위변조 방지: 서버에서 플랜 가격과 검증
-    const PLAN_PRICES: Record<string, number> = { monthly: 9900, yearly: 79000 };
+    const PLAN_PRICES: Record<string, number> = {
+        basic_monthly: 6900,     basic_yearly: 69000,
+        standard_monthly: 12900, standard_yearly: 129000,
+        pro_monthly: 24900,      pro_yearly: 249000,
+        ebook: 29900, print: 79900, editorial: 199000,
+        monthly: 9900, yearly: 79000, // 하위 호환
+    };
     const expectedAmount = PLAN_PRICES[plan as string];
     if (!expectedAmount || Number(amount) !== expectedAmount) {
         return NextResponse.json({ error: '결제 금액이 올바르지 않습니다.' }, { status: 400 });
@@ -49,10 +55,10 @@ export async function POST(req: NextRequest) {
     // 2. 구독 만료일 계산
     const now = new Date();
     const expiresAt = new Date(now);
-    if (plan === 'monthly') {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-    } else if (plan === 'yearly') {
+    if (plan.endsWith('_yearly') || plan === 'yearly') {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    } else {
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
     }
 
     // 3. Supabase에 구독 저장

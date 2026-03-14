@@ -70,8 +70,19 @@ export default function TrackPage() {
     const [notSubmitted, setNotSubmitted] = useState(false);
 
     useEffect(() => {
-        const name = sessionStorage.getItem("mf_name");
-        const phone = sessionStorage.getItem("mf_phone");
+        let name = sessionStorage.getItem("mf_name");
+        let phone = sessionStorage.getItem("mf_phone");
+
+        if (!name || !phone) {
+            const raw = sessionStorage.getItem("magic_frame_session");
+            if (raw) {
+                try {
+                    const s = JSON.parse(raw);
+                    name = s.name || null;
+                    phone = s.phone || null;
+                } catch { /* ignore */ }
+            }
+        }
 
         if (!name || !phone) {
             router.replace("/magic-frame/login");

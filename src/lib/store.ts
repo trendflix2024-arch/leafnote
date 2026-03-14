@@ -13,6 +13,27 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface InteriorLayout {
+  font: string;
+  fontSize: number;       // pt (10–14)
+  lineHeight: number;     // % (140–200)
+  marginInner: number;    // mm
+  marginOuter: number;    // mm
+  marginTop: number;      // mm
+  marginBottom: number;   // mm
+  chapterStyle: 'minimal' | 'classic' | 'ornate';
+  letterSpacing: number;  // × 100 em (0 = 기본, 10 = 0.1em)
+  paragraphIndent: number; // em 단위 (0 = 없음, 1 = 1em)
+}
+
+export const DEFAULT_INTERIOR: InteriorLayout = {
+  font: 'Noto Serif KR', fontSize: 11, lineHeight: 165,
+  marginInner: 16, marginOuter: 14, marginTop: 18, marginBottom: 22,
+  chapterStyle: 'classic',
+  letterSpacing: 0,
+  paragraphIndent: 1,
+};
+
 export interface Project {
   id: string;
   title: string;
@@ -25,11 +46,15 @@ export interface Project {
     layout: string;
     theme: string;
     params?: any;
+    topic?: string;
+    interiorLayout?: InteriorLayout;
   };
   isDeleted?: boolean;
   interviewStage?: number;
   currentWordCount?: number;
   targetWordCount?: number;
+  dedicationText?: string;
+  authorBio?: string;
 }
 
 interface UserProfile {
@@ -69,7 +94,11 @@ interface BookStore {
   setFullDraft: (draft: string) => Promise<void>;
   setCoverImageUrl: (url: string) => Promise<void>;
   setCoverDesign: (design: Partial<Project['coverDesign']>) => Promise<void>;
+  setInteriorLayout: (layout: Partial<InteriorLayout>) => Promise<void>;
   updateProjectTitle: (title: string) => Promise<void>;
+  setDedicationText: (text: string) => Promise<void>;
+  setAuthorBio: (bio: string) => Promise<void>;
+  setTargetWordCount: (count: number) => Promise<void>;
 
   // User Actions
   setUserProfile: (profile: UserProfile | null) => void;
@@ -388,6 +417,52 @@ export const useBookStore = create<BookStore>()(
           )
         }));
 
+        const project = get().projects.find(p => p.id === get().currentProjectId);
+        const userId = get().userProfile?.id;
+        if (project && userId) await syncProjectToCloud(project, userId);
+      },
+
+      setInteriorLayout: async (layout) => {
+        const current = get().projects.find(p => p.id === get().currentProjectId);
+        if (!current) return;
+        const merged: InteriorLayout = { ...current.coverDesign.interiorLayout, ...layout } as InteriorLayout;
+        await get().setCoverDesign({ interiorLayout: merged });
+      },
+
+      setDedicationText: async (text) => {
+        set((state) => ({
+          projects: state.projects.map(p =>
+            p.id === state.currentProjectId
+              ? { ...p, dedicationText: text, updatedAt: Date.now() }
+              : p
+          ),
+        }));
+        const project = get().projects.find(p => p.id === get().currentProjectId);
+        const userId = get().userProfile?.id;
+        if (project && userId) await syncProjectToCloud(project, userId);
+      },
+
+      setAuthorBio: async (bio) => {
+        set((state) => ({
+          projects: state.projects.map(p =>
+            p.id === state.currentProjectId
+              ? { ...p, authorBio: bio, updatedAt: Date.now() }
+              : p
+          ),
+        }));
+        const project = get().projects.find(p => p.id === get().currentProjectId);
+        const userId = get().userProfile?.id;
+        if (project && userId) await syncProjectToCloud(project, userId);
+      },
+
+      setTargetWordCount: async (count) => {
+        set((state) => ({
+          projects: state.projects.map(p =>
+            p.id === state.currentProjectId
+              ? { ...p, targetWordCount: count, updatedAt: Date.now() }
+              : p
+          ),
+        }));
         const project = get().projects.find(p => p.id === get().currentProjectId);
         const userId = get().userProfile?.id;
         if (project && userId) await syncProjectToCloud(project, userId);

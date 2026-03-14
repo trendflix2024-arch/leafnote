@@ -9,6 +9,12 @@ export const metadata: Metadata = {
     description: "지금, 당신의 대화가 기록이 됩니다. 한정된 베타 멤버에게만 드리는 특별한 작가 경험을 시작하세요. ✨",
     keywords: ["리프노트", "LeafNote", "베타 초대", "인생 기록", "AI 인터뷰", "개인 출판", "자서전", "부모님 선물"],
     manifest: "/manifest.json",
+    verification: {
+        google: "L7aXg79Oke9tz8Bax2_rLAoiVUiv7XZk8rGMrsbFzv0",
+        other: {
+            "naver-site-verification": "df30150f65a4fe27e0266f2e3aac83e216a7be6d",
+        },
+    },
     openGraph: {
         title: "리프노트: 모든 인생은 한 권의 책이다",
         description: "지금, 당신의 대화가 기록이 됩니다. 한정된 베타 멤버에게만 드리는 특별한 작가 경험을 시작하세요. ✨",

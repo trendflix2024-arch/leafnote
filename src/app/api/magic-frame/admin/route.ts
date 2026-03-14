@@ -57,10 +57,10 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: '사용자 ID가 필요합니다.' }, { status: 400 });
         }
 
-        // Check 30-minute window
+        // Check shipping status — only allow reset at 사진접수(pending) stage
         const { data: user, error: fetchError } = await supabase
             .from('magic_frame_users')
-            .select('submitted, updated_at')
+            .select('submitted, shipping_status')
             .eq('id', userId)
             .single();
 
@@ -68,12 +68,8 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
         }
 
-        if (user.submitted && user.updated_at) {
-            const submittedAt = new Date(user.updated_at).getTime();
-            const elapsed = Date.now() - submittedAt;
-            if (elapsed > 30 * 60 * 1000) {
-                return NextResponse.json({ error: '제출 후 30분이 경과하여 재제출을 허용할 수 없습니다.' }, { status: 400 });
-            }
+        if (user.shipping_status && user.shipping_status !== 'pending') {
+            return NextResponse.json({ error: '제작중 이후 단계에서는 재제출을 허용할 수 없습니다.' }, { status: 400 });
         }
 
         const { error } = await supabase
