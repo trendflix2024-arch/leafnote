@@ -1175,6 +1175,7 @@ export default function DesignPage() {
                                             transform: viewAngle === 'front' ? 'scale(1.35)' : 'scale(1)',
                                             width: panelW,
                                             height: panelH,
+                                            position: 'relative',
                                         }}>
                                             <FabricCoverCanvas
                                                 canvasW={panelW}
@@ -1199,14 +1200,14 @@ export default function DesignPage() {
                                                 onPosChange={(pos) => { pushDesignHistory(); setTextGroupPos(pos); }}
                                                 onExportReady={(fn) => { exportFnRef.current = fn; }}
                                             />
+                                            {/* CSS brightness overlay — inner transform div 안에 배치해야 canvas와 동일 좌표계 */}
+                                            {bgImageUrl && ((100 - bgBrightness) / 100 * 0.65) > 0.01 && (
+                                                <div
+                                                    className="absolute inset-0 pointer-events-none"
+                                                    style={{ backgroundColor: `rgba(0,0,0,${((100 - bgBrightness) / 100 * 0.65).toFixed(2)})`, zIndex: 1 }}
+                                                />
+                                            )}
                                         </div>
-                                        {/* CSS brightness overlay — canvas 재빌드 없이 즉시 반영 */}
-                                        {bgImageUrl && ((100 - bgBrightness) / 100 * 0.65) > 0.01 && (
-                                            <div
-                                                className="absolute inset-0 pointer-events-none"
-                                                style={{ backgroundColor: `rgba(0,0,0,${((100 - bgBrightness) / 100 * 0.65).toFixed(2)})`, zIndex: 1 }}
-                                            />
-                                        )}
                                     </div>
                                 )}
 
