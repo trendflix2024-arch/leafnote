@@ -536,14 +536,13 @@ export default function DesignPage() {
 
     // View angle is now 2D only (front/spine/back/2d)
 
-    // --- Default Design Fallback ---
-    const design = designParams || {
-        colors: { primary: '#064e3b', secondary: '#022c22', accent: '#fbbf24', textFront: '#ecfdf5', textSpine: '#ecfdf5' },
-        style: { texture: 'leather', layout: 'elegant' },
-        generatedTexts: { frontSubtitle: "A story waiting to be told...", backBlurb: "질문 폼을 채워나눔으로써 세상에 하나뿐인 나만의 표지를 디자인해보세요. 에코는 당신의 이야기에 가장 잘 어울리는 색상과 텍스처를 찾아낼 것입니다.", spineTitle: currentProject.title }
-    };
-
-    const { colors, style, generatedTexts: aiTexts } = design;
+    // --- Default Design Fallback (deep-merge so saved params without AI fields don't crash) ---
+    const DEFAULT_COLORS = { primary: '#064e3b', secondary: '#022c22', accent: '#fbbf24', textFront: '#ecfdf5', textSpine: '#ecfdf5' };
+    const DEFAULT_STYLE = { texture: 'leather', layout: 'elegant' };
+    const DEFAULT_TEXTS = { frontSubtitle: "A story waiting to be told...", backBlurb: "질문 폼을 채워나눔으로써 세상에 하나뿐인 나만의 표지를 디자인해보세요.", spineTitle: currentProject.title };
+    const colors = { ...DEFAULT_COLORS, ...(designParams?.colors || {}) };
+    const style = { ...DEFAULT_STYLE, ...(designParams?.style || {}) };
+    const aiTexts = { ...DEFAULT_TEXTS, ...(designParams?.generatedTexts || {}) };
     // Use editable texts if set, otherwise fall back to AI-generated
     const generatedTexts = {
         frontSubtitle: editTexts.frontSubtitle || aiTexts.frontSubtitle,
