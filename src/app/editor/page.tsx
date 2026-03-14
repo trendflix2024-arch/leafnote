@@ -997,6 +997,305 @@ function EditorContent() {
         calcMatchCount(findText);
     };
 
+    const renderSidebarContent = () => (
+        <>
+            {/* 판형 선택 */}
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-5 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-3">
+                <div className="flex items-center gap-2 px-2">
+                    <BookOpen className="h-4 w-4 text-emerald-600" />
+                    <h3 className="font-bold text-sm text-slate-800">판형</h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5 px-1">
+                    {BOOK_FORMATS.map(f => (
+                        <button
+                            key={f.key}
+                            onClick={() => handleBookFormatChange(f.key)}
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                                bookFormat === f.key
+                                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100'
+                                    : 'bg-slate-50 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-100'
+                            }`}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+                {(() => {
+                    const fmt = BOOK_FORMATS.find(f => f.key === bookFormat)!;
+                    return (
+                        <p className="text-[10px] text-slate-400 px-2">
+                            {fmt.w}×{fmt.h}mm · {fmt.desc}
+                        </p>
+                    );
+                })()}
+                {/* 글자수 목표 + 진행 바 */}
+                <div className="px-2 pt-2 border-t border-slate-100 mt-2">
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <input
+                            type="number" step={1000} min={1000} max={500000}
+                            placeholder="목표 글자수"
+                            defaultValue={currentProject?.targetWordCount || ''}
+                            onBlur={e => { const v = Number(e.target.value); if (v > 0) setTargetWordCount(v); }}
+                            className="w-28 text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                        />
+                        <span className="text-[10px] text-slate-400">자 목표</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mb-1">현재: {wordCount.toLocaleString()}자</p>
+                    {(currentProject?.targetWordCount || 0) > 0 && (
+                        <div>
+                            <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                                <span>{Math.round(wordCount / currentProject!.targetWordCount! * 100)}%</span>
+                                <span>{currentProject!.targetWordCount!.toLocaleString()}자</span>
+                            </div>
+                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, wordCount / currentProject!.targetWordCount! * 100)}%` }} />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 내지 레이아웃 패널 */}
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                <button
+                    className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-slate-50 transition-colors"
+                    onClick={() => setShowLayoutPanel(!showLayoutPanel)}
+                >
+                    <div className="flex items-center gap-2">
+                        <Type className="h-4 w-4 text-emerald-600" />
+                        <h3 className="font-bold text-sm text-slate-800">내지 레이아웃</h3>
+                    </div>
+                    {showLayoutPanel ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                </button>
+                {showLayoutPanel && (
+                    <div className="px-4 md:px-5 pb-5 space-y-4 border-t border-slate-100">
+                        {/* 빠른 프리셋 */}
+                        <div className="pt-3">
+                            <p className="text-[10px] text-slate-400 font-medium mb-2">빠른 프리셋</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {QUICK_PRESETS.map(qp => (
+                                    <button
+                                        key={qp.label}
+                                        onClick={() => setInteriorLayout(qp.preset)}
+                                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-100 transition-all"
+                                    >
+                                        {qp.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* 본문 글꼴 */}
+                        <div className="space-y-1">
+                            <p className="text-[10px] text-slate-400 font-medium">본문 글꼴</p>
+                            <select
+                                value={il.font}
+                                onChange={(e) => setInteriorLayout({ font: e.target.value })}
+                                className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                                style={{ fontFamily: `'${il.font}', serif` }}
+                            >
+                                {LAYOUT_FONTS.map(f => (
+                                    <option key={f.value} value={f.value}>{f.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {/* 글자 크기 */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">글자 크기</p>
+                                <span className="text-[10px] font-bold text-emerald-600">{il.fontSize}pt</span>
+                            </div>
+                            <input type="range" min={9} max={14} step={0.5} value={il.fontSize}
+                                onChange={(e) => setInteriorLayout({ fontSize: Number(e.target.value) })}
+                                className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                        </div>
+                        {/* 행 간격 */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">행 간격</p>
+                                <span className="text-[10px] font-bold text-emerald-600">{il.lineHeight}%</span>
+                            </div>
+                            <input type="range" min={140} max={200} step={5} value={il.lineHeight}
+                                onChange={(e) => setInteriorLayout({ lineHeight: Number(e.target.value) })}
+                                className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                        </div>
+                        {/* 안쪽 여백 */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">안쪽 여백 (제본)</p>
+                                <span className="text-[10px] font-bold text-emerald-600">{il.marginInner}mm</span>
+                            </div>
+                            <input type="range" min={10} max={25} step={1} value={il.marginInner}
+                                onChange={(e) => setInteriorLayout({ marginInner: Number(e.target.value) })}
+                                className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                        </div>
+                        {/* 바깥쪽 여백 */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">바깥쪽 여백</p>
+                                <span className="text-[10px] font-bold text-emerald-600">{il.marginOuter}mm</span>
+                            </div>
+                            <input type="range" min={8} max={20} step={1} value={il.marginOuter}
+                                onChange={(e) => setInteriorLayout({ marginOuter: Number(e.target.value) })}
+                                className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                        </div>
+                        {/* 위/아래 여백 */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                    <p className="text-[10px] text-slate-400 font-medium">위 여백</p>
+                                    <span className="text-[10px] font-bold text-emerald-600">{il.marginTop}mm</span>
+                                </div>
+                                <input type="range" min={10} max={30} step={1} value={il.marginTop}
+                                    onChange={(e) => setInteriorLayout({ marginTop: Number(e.target.value) })}
+                                    className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                    <p className="text-[10px] text-slate-400 font-medium">아래 여백</p>
+                                    <span className="text-[10px] font-bold text-emerald-600">{il.marginBottom}mm</span>
+                                </div>
+                                <input type="range" min={15} max={35} step={1} value={il.marginBottom}
+                                    onChange={(e) => setInteriorLayout({ marginBottom: Number(e.target.value) })}
+                                    className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                            </div>
+                        </div>
+                        {/* 챕터 스타일 */}
+                        <div className="space-y-1.5">
+                            <p className="text-[10px] text-slate-400 font-medium">챕터 제목 스타일</p>
+                            <div className="flex gap-1.5">
+                                {(['minimal', 'classic', 'ornate'] as const).map(style => (
+                                    <button
+                                        key={style}
+                                        onClick={() => setInteriorLayout({ chapterStyle: style })}
+                                        className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${il.chapterStyle === style ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200 hover:text-emerald-600'}`}
+                                    >
+                                        {style === 'minimal' ? '심플' : style === 'classic' ? '클래식' : '장식형'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* 자간 */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">자간</p>
+                                <span className="text-[10px] font-bold text-emerald-600">{((il.letterSpacing ?? 0) / 100).toFixed(2)}em</span>
+                            </div>
+                            <input type="range" min={0} max={20} step={1} value={il.letterSpacing ?? 0}
+                                onChange={(e) => setInteriorLayout({ letterSpacing: Number(e.target.value) })}
+                                className="w-full h-1 accent-emerald-600 cursor-pointer" />
+                        </div>
+                        {/* 들여쓰기 */}
+                        <div className="space-y-1.5">
+                            <p className="text-[10px] text-slate-400 font-medium">들여쓰기</p>
+                            <div className="flex gap-1.5">
+                                {([{ label: '없음', val: 0 }, { label: '1em', val: 1 }, { label: '2em', val: 2 }]).map(opt => (
+                                    <button key={opt.val}
+                                        onClick={() => setInteriorLayout({ paragraphIndent: opt.val })}
+                                        className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${(il.paragraphIndent ?? 1) === opt.val ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200 hover:text-emerald-600'}`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-6">
+                <div className="space-y-2">
+                    <h3 className="font-bold text-lg text-slate-800 px-2">목차</h3>
+                    <div className="h-1 w-8 bg-emerald-500 rounded-full mx-2" />
+                </div>
+                <div className="space-y-2 max-h-[40vh] lg:max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar focus-visible:outline-none">
+                    {chapters.map((ch, i) => (
+                        <button
+                            key={ch.id}
+                            onClick={() => { setActiveChapter(i); setSelectedText(''); }}
+                            className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all text-left group ${i === activeChapter
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100 scale-[1.02]'
+                                : 'hover:bg-emerald-50 text-slate-600'
+                                }`}
+                        >
+                            <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${i === activeChapter ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                {i + 1}
+                            </span>
+                            <span className="flex-1 font-bold truncate">{ch.title}</span>
+                        </button>
+                    ))}
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={addChapter}
+                            className="flex-1 rounded-2xl border-dashed border-2 h-14 text-slate-400 hover:text-emerald-600 hover:border-emerald-200"
+                        >
+                            <Plus size={18} className="mr-2" /> 새 챕터
+                        </Button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handlePhotoUpload}
+                            accept="image/*"
+                            className="hidden"
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="flex-1 rounded-2xl border-dashed border-2 h-14 text-slate-400 hover:text-emerald-600 hover:border-emerald-200"
+                        >
+                            {isUploading ? <Loader2 size={18} className="animate-spin" /> : <><ImageIcon size={18} className="mr-2" /> 사진 첨부</>}
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="bg-emerald-900 text-white rounded-[2.5rem] p-4 lg:p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-emerald-800/50">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Sparkles size={80} />
+                    </div>
+                    <h3 className="font-bold text-xl mb-4 flex items-center gap-2 relative z-10">
+                        <Sparkles size={20} className="text-emerald-300" />
+                        에코에게 부탁하기
+                    </h3>
+                    <p className="text-emerald-100/80 text-sm mb-4 lg:mb-6 leading-relaxed break-keep relative z-10 font-medium">
+                        선택한 문장을 더 아름답게 다듬거나 감칠맛 나게 바꿉니다.
+                    </p>
+                    <Button
+                        disabled={isRewriting || isChInterviewLoading}
+                        onClick={() => openChapterInterview(activeChapter)}
+                        className="w-full justify-start bg-emerald-500/30 hover:bg-emerald-500/50 text-white rounded-2xl h-14 px-5 font-bold border border-emerald-400/30 transition-all hover:scale-[1.02] shadow-sm mb-3 break-keep relative z-10"
+                    >
+                        <MessageCircle className="mr-3 h-5 w-5 text-emerald-300 shrink-0" />
+                        <span className="text-sm lg:text-base tracking-tight">에코와 이어 쓰기</span>
+                    </Button>
+                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-3 relative z-10">
+                        {[
+                            { key: 'detail', label: '더 자세하게 들려줘', icon: '🔍' },
+                            { key: 'literary', label: '멋진 문장으로 바꿔줘', icon: '📖' },
+                            { key: 'warm', label: '더 따뜻하게 다듬어줘', icon: '🌸' },
+                            { key: 'concise', label: '깔끔하게 줄여줘', icon: '✂️' },
+                        ].map(opt => (
+                            <Button
+                                key={opt.key}
+                                variant="ghost"
+                                disabled={isRewriting}
+                                onClick={() => rewriteSection(opt.key)}
+                                className="w-full justify-start bg-white/10 hover:bg-white/20 text-white rounded-2xl h-14 px-5 font-bold border border-white/5 transition-all hover:scale-[1.02] shadow-sm break-keep"
+                            >
+                                {isRewriting && rewriteMode === opt.key
+                                    ? <Loader2 className="animate-spin mr-3 h-5 w-5 text-emerald-300" />
+                                    : <span className="mr-3 text-xl opacity-90">{opt.icon}</span>
+                                }
+                                <span className="text-sm lg:text-base tracking-tight">{opt.label}</span>
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+
     return (
         <div className="min-h-screen bg-[#faf9f6] flex flex-col">
             <ProgressStepper />
@@ -1060,6 +1359,22 @@ function EditorContent() {
                 />
             )}
 
+            {/* 모바일 사이드바 overlay — motion.aside와 완전히 분리 */}
+            {showMobileSidebar && !isFocusMode && (
+                <div className="fixed inset-0 z-50 bg-white overflow-y-auto p-4 pb-20 lg:hidden">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="font-bold text-slate-800">편집 설정</h2>
+                        <button
+                            onClick={() => setShowMobileSidebar(false)}
+                            className="p-1 rounded-lg hover:bg-slate-100"
+                        >
+                            <X className="h-5 w-5 text-slate-500" />
+                        </button>
+                    </div>
+                    {renderSidebarContent()}
+                </div>
+            )}
+
             <main className="flex-1 w-full flex overflow-hidden">
                 <div className={`flex-1 max-w-7xl mx-auto w-full p-4 lg:p-12 transition-all duration-500 ${isFocusMode ? 'max-w-4xl' : ''}`}>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 h-full">
@@ -1069,309 +1384,9 @@ function EditorContent() {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    className={`lg:col-span-4 space-y-6 order-2 lg:order-1 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0 ${showMobileSidebar ? 'fixed inset-0 z-50 bg-white overflow-y-auto p-4 pb-20' : 'hidden'} lg:block`}
+                                    className="hidden lg:block lg:col-span-4 space-y-6 order-2 lg:order-1"
                                 >
-                                    {/* 모바일 사이드바 헤더 */}
-                                    <div className="flex justify-between items-center mb-2 lg:hidden">
-                                        <h2 className="font-bold text-slate-800">편집 설정</h2>
-                                        <button onClick={() => setShowMobileSidebar(false)} className="p-1 rounded-lg hover:bg-slate-100">
-                                            <X className="h-5 w-5 text-slate-500" />
-                                        </button>
-                                    </div>
-                                    {/* 판형 선택 */}
-                                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-5 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-3">
-                                        <div className="flex items-center gap-2 px-2">
-                                            <BookOpen className="h-4 w-4 text-emerald-600" />
-                                            <h3 className="font-bold text-sm text-slate-800">판형</h3>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5 px-1">
-                                            {BOOK_FORMATS.map(f => (
-                                                <button
-                                                    key={f.key}
-                                                    onClick={() => handleBookFormatChange(f.key)}
-                                                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-                                                        bookFormat === f.key
-                                                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100'
-                                                            : 'bg-slate-50 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-100'
-                                                    }`}
-                                                >
-                                                    {f.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        {(() => {
-                                            const fmt = BOOK_FORMATS.find(f => f.key === bookFormat)!;
-                                            return (
-                                                <p className="text-[10px] text-slate-400 px-2">
-                                                    {fmt.w}×{fmt.h}mm · {fmt.desc}
-                                                </p>
-                                            );
-                                        })()}
-                                        {/* 글자수 목표 + 진행 바 */}
-                                        <div className="px-2 pt-2 border-t border-slate-100 mt-2">
-                                            <div className="flex items-center gap-2 mb-1.5">
-                                                <input
-                                                    type="number" step={1000} min={1000} max={500000}
-                                                    placeholder="목표 글자수"
-                                                    defaultValue={currentProject?.targetWordCount || ''}
-                                                    onBlur={e => { const v = Number(e.target.value); if (v > 0) setTargetWordCount(v); }}
-                                                    className="w-28 text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-300"
-                                                />
-                                                <span className="text-[10px] text-slate-400">자 목표</span>
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 mb-1">현재: {wordCount.toLocaleString()}자</p>
-                                            {(currentProject?.targetWordCount || 0) > 0 && (
-                                                <div>
-                                                    <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-                                                        <span>{Math.round(wordCount / currentProject!.targetWordCount! * 100)}%</span>
-                                                        <span>{currentProject!.targetWordCount!.toLocaleString()}자</span>
-                                                    </div>
-                                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-emerald-500 rounded-full transition-all"
-                                                            style={{ width: `${Math.min(100, wordCount / currentProject!.targetWordCount! * 100)}%` }} />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* 내지 레이아웃 패널 */}
-                                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                                        <button
-                                            className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-slate-50 transition-colors"
-                                            onClick={() => setShowLayoutPanel(!showLayoutPanel)}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <Type className="h-4 w-4 text-emerald-600" />
-                                                <h3 className="font-bold text-sm text-slate-800">내지 레이아웃</h3>
-                                            </div>
-                                            {showLayoutPanel ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                                        </button>
-                                        {showLayoutPanel && (
-                                            <div className="px-4 md:px-5 pb-5 space-y-4 border-t border-slate-100">
-                                                {/* 빠른 프리셋 */}
-                                                <div className="pt-3">
-                                                    <p className="text-[10px] text-slate-400 font-medium mb-2">빠른 프리셋</p>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {QUICK_PRESETS.map(qp => (
-                                                            <button
-                                                                key={qp.label}
-                                                                onClick={() => setInteriorLayout(qp.preset)}
-                                                                className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-100 transition-all"
-                                                            >
-                                                                {qp.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                {/* 본문 글꼴 */}
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] text-slate-400 font-medium">본문 글꼴</p>
-                                                    <select
-                                                        value={il.font}
-                                                        onChange={(e) => setInteriorLayout({ font: e.target.value })}
-                                                        className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-300"
-                                                        style={{ fontFamily: `'${il.font}', serif` }}
-                                                    >
-                                                        {LAYOUT_FONTS.map(f => (
-                                                            <option key={f.value} value={f.value}>{f.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                {/* 글자 크기 */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="text-[10px] text-slate-400 font-medium">글자 크기</p>
-                                                        <span className="text-[10px] font-bold text-emerald-600">{il.fontSize}pt</span>
-                                                    </div>
-                                                    <input type="range" min={9} max={14} step={0.5} value={il.fontSize}
-                                                        onChange={(e) => setInteriorLayout({ fontSize: Number(e.target.value) })}
-                                                        className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                </div>
-                                                {/* 행 간격 */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="text-[10px] text-slate-400 font-medium">행 간격</p>
-                                                        <span className="text-[10px] font-bold text-emerald-600">{il.lineHeight}%</span>
-                                                    </div>
-                                                    <input type="range" min={140} max={200} step={5} value={il.lineHeight}
-                                                        onChange={(e) => setInteriorLayout({ lineHeight: Number(e.target.value) })}
-                                                        className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                </div>
-                                                {/* 안쪽 여백 */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="text-[10px] text-slate-400 font-medium">안쪽 여백 (제본)</p>
-                                                        <span className="text-[10px] font-bold text-emerald-600">{il.marginInner}mm</span>
-                                                    </div>
-                                                    <input type="range" min={10} max={25} step={1} value={il.marginInner}
-                                                        onChange={(e) => setInteriorLayout({ marginInner: Number(e.target.value) })}
-                                                        className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                </div>
-                                                {/* 바깥쪽 여백 */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="text-[10px] text-slate-400 font-medium">바깥쪽 여백</p>
-                                                        <span className="text-[10px] font-bold text-emerald-600">{il.marginOuter}mm</span>
-                                                    </div>
-                                                    <input type="range" min={8} max={20} step={1} value={il.marginOuter}
-                                                        onChange={(e) => setInteriorLayout({ marginOuter: Number(e.target.value) })}
-                                                        className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                </div>
-                                                {/* 위/아래 여백 */}
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="space-y-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <p className="text-[10px] text-slate-400 font-medium">위 여백</p>
-                                                            <span className="text-[10px] font-bold text-emerald-600">{il.marginTop}mm</span>
-                                                        </div>
-                                                        <input type="range" min={10} max={30} step={1} value={il.marginTop}
-                                                            onChange={(e) => setInteriorLayout({ marginTop: Number(e.target.value) })}
-                                                            className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <p className="text-[10px] text-slate-400 font-medium">아래 여백</p>
-                                                            <span className="text-[10px] font-bold text-emerald-600">{il.marginBottom}mm</span>
-                                                        </div>
-                                                        <input type="range" min={15} max={35} step={1} value={il.marginBottom}
-                                                            onChange={(e) => setInteriorLayout({ marginBottom: Number(e.target.value) })}
-                                                            className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                    </div>
-                                                </div>
-                                                {/* 챕터 스타일 */}
-                                                <div className="space-y-1.5">
-                                                    <p className="text-[10px] text-slate-400 font-medium">챕터 제목 스타일</p>
-                                                    <div className="flex gap-1.5">
-                                                        {(['minimal', 'classic', 'ornate'] as const).map(style => (
-                                                            <button
-                                                                key={style}
-                                                                onClick={() => setInteriorLayout({ chapterStyle: style })}
-                                                                className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${il.chapterStyle === style ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200 hover:text-emerald-600'}`}
-                                                            >
-                                                                {style === 'minimal' ? '심플' : style === 'classic' ? '클래식' : '장식형'}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                {/* 자간 */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="text-[10px] text-slate-400 font-medium">자간</p>
-                                                        <span className="text-[10px] font-bold text-emerald-600">{((il.letterSpacing ?? 0) / 100).toFixed(2)}em</span>
-                                                    </div>
-                                                    <input type="range" min={0} max={20} step={1} value={il.letterSpacing ?? 0}
-                                                        onChange={(e) => setInteriorLayout({ letterSpacing: Number(e.target.value) })}
-                                                        className="w-full h-1 accent-emerald-600 cursor-pointer" />
-                                                </div>
-                                                {/* 들여쓰기 */}
-                                                <div className="space-y-1.5">
-                                                    <p className="text-[10px] text-slate-400 font-medium">들여쓰기</p>
-                                                    <div className="flex gap-1.5">
-                                                        {([{ label: '없음', val: 0 }, { label: '1em', val: 1 }, { label: '2em', val: 2 }]).map(opt => (
-                                                            <button key={opt.val}
-                                                                onClick={() => setInteriorLayout({ paragraphIndent: opt.val })}
-                                                                className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${(il.paragraphIndent ?? 1) === opt.val ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200 hover:text-emerald-600'}`}
-                                                            >
-                                                                {opt.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-6">
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-lg text-slate-800 px-2">목차</h3>
-                                            <div className="h-1 w-8 bg-emerald-500 rounded-full mx-2" />
-                                        </div>
-                                        <div className="space-y-2 max-h-[40vh] lg:max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar focus-visible:outline-none">
-                                            {chapters.map((ch, i) => (
-                                                <button
-                                                    key={ch.id}
-                                                    onClick={() => { setActiveChapter(i); setSelectedText(''); }}
-                                                    className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all text-left group ${i === activeChapter
-                                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100 scale-[1.02]'
-                                                        : 'hover:bg-emerald-50 text-slate-600'
-                                                        }`}
-                                                >
-                                                    <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${i === activeChapter ? 'bg-white/20' : 'bg-slate-100'}`}>
-                                                        {i + 1}
-                                                    </span>
-                                                    <span className="flex-1 font-bold truncate">{ch.title}</span>
-                                                </button>
-                                            ))}
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={addChapter}
-                                                    className="flex-1 rounded-2xl border-dashed border-2 h-14 text-slate-400 hover:text-emerald-600 hover:border-emerald-200"
-                                                >
-                                                    <Plus size={18} className="mr-2" /> 새 챕터
-                                                </Button>
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    onChange={handlePhotoUpload}
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                />
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    disabled={isUploading}
-                                                    className="flex-1 rounded-2xl border-dashed border-2 h-14 text-slate-400 hover:text-emerald-600 hover:border-emerald-200"
-                                                >
-                                                    {isUploading ? <Loader2 size={18} className="animate-spin" /> : <><ImageIcon size={18} className="mr-2" /> 사진 첨부</>}
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-emerald-900 text-white rounded-[2.5rem] p-4 lg:p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-emerald-800/50">
-                                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                                <Sparkles size={80} />
-                                            </div>
-                                            <h3 className="font-bold text-xl mb-4 flex items-center gap-2 relative z-10">
-                                                <Sparkles size={20} className="text-emerald-300" />
-                                                에코에게 부탁하기
-                                            </h3>
-                                            <p className="text-emerald-100/80 text-sm mb-4 lg:mb-6 leading-relaxed break-keep relative z-10 font-medium">
-                                                선택한 문장을 더 아름답게 다듬거나 감칠맛 나게 바꿉니다.
-                                            </p>
-                                            <Button
-                                                disabled={isRewriting || isChInterviewLoading}
-                                                onClick={() => openChapterInterview(activeChapter)}
-                                                className="w-full justify-start bg-emerald-500/30 hover:bg-emerald-500/50 text-white rounded-2xl h-14 px-5 font-bold border border-emerald-400/30 transition-all hover:scale-[1.02] shadow-sm mb-3 break-keep relative z-10"
-                                            >
-                                                <MessageCircle className="mr-3 h-5 w-5 text-emerald-300 shrink-0" />
-                                                <span className="text-sm lg:text-base tracking-tight">에코와 이어 쓰기</span>
-                                            </Button>
-                                            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-3 relative z-10">
-                                                {[
-                                                    { key: 'detail', label: '더 자세하게 들려줘', icon: '🔍' },
-                                                    { key: 'literary', label: '멋진 문장으로 바꿔줘', icon: '📖' },
-                                                    { key: 'warm', label: '더 따뜻하게 다듬어줘', icon: '🌸' },
-                                                    { key: 'concise', label: '깔끔하게 줄여줘', icon: '✂️' },
-                                                ].map(opt => (
-                                                    <Button
-                                                        key={opt.key}
-                                                        variant="ghost"
-                                                        disabled={isRewriting}
-                                                        onClick={() => rewriteSection(opt.key)}
-                                                        className="w-full justify-start bg-white/10 hover:bg-white/20 text-white rounded-2xl h-14 px-5 font-bold border border-white/5 transition-all hover:scale-[1.02] shadow-sm break-keep"
-                                                    >
-                                                        {isRewriting && rewriteMode === opt.key
-                                                            ? <Loader2 className="animate-spin mr-3 h-5 w-5 text-emerald-300" />
-                                                            : <span className="mr-3 text-xl opacity-90">{opt.icon}</span>
-                                                        }
-                                                        <span className="text-sm lg:text-base tracking-tight">{opt.label}</span>
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {renderSidebarContent()}
                                 </motion.aside>
                             )}
                         </AnimatePresence>
