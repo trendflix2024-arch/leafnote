@@ -431,6 +431,8 @@ function EditorContent() {
     const [rewriteNotice, setRewriteNotice] = useState<string | null>(null);
     const [generateError, setGenerateError] = useState<string | null>(null);
 
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
     // Find/Replace State
     const [showFindReplace, setShowFindReplace] = useState(false);
     const [findText, setFindText] = useState('');
@@ -1059,7 +1061,7 @@ function EditorContent() {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    className="lg:col-span-4 space-y-6"
+                                    className={`lg:col-span-4 space-y-6 order-2 lg:order-1 ${showMobileSidebar ? 'block' : 'hidden'} lg:block`}
                                 >
                                     {/* 판형 선택 */}
                                     <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-5 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-3">
@@ -1312,7 +1314,7 @@ function EditorContent() {
                                             </div>
                                         </div>
 
-                                        <div className="bg-emerald-900 text-white rounded-[2.5rem] p-6 lg:p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-emerald-800/50">
+                                        <div className="bg-emerald-900 text-white rounded-[2.5rem] p-4 lg:p-8 shadow-2xl shadow-emerald-900/20 relative overflow-hidden border border-emerald-800/50">
                                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                                 <Sparkles size={80} />
                                             </div>
@@ -1329,7 +1331,7 @@ function EditorContent() {
                                                 className="w-full justify-start bg-emerald-500/30 hover:bg-emerald-500/50 text-white rounded-2xl h-14 px-5 font-bold border border-emerald-400/30 transition-all hover:scale-[1.02] shadow-sm mb-3 break-keep relative z-10"
                                             >
                                                 <MessageCircle className="mr-3 h-5 w-5 text-emerald-300 shrink-0" />
-                                                <span className="text-sm lg:text-base tracking-tight">에코와 이 챕터 더 써내려가기</span>
+                                                <span className="text-sm lg:text-base tracking-tight">에코와 이어 쓰기</span>
                                             </Button>
                                             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-3 relative z-10">
                                                 {[
@@ -1359,9 +1361,9 @@ function EditorContent() {
                             )}
                         </AnimatePresence>
 
-                        <section className={`${isFocusMode ? 'lg:col-span-12' : 'lg:col-span-8'}`}>
+                        <section className={`${isFocusMode ? 'lg:col-span-12' : 'lg:col-span-8'} order-1 lg:order-2`}>
                             {/* 편집 / 미리보기 탭 */}
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center justify-between mb-4 sticky top-0 z-20 bg-[#faf9f6]/95 backdrop-blur-sm py-2 -mx-1 px-1">
                                 <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
                                     <button
                                         onClick={() => setPreviewMode('edit')}
@@ -1572,6 +1574,20 @@ function EditorContent() {
                     </div>
                 </div>
             </main>
+
+            {/* Mobile FAB — 사이드바 토글 */}
+            {!isFocusMode && (
+                <button
+                    className="fixed bottom-6 right-4 z-40 lg:hidden bg-emerald-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl shadow-emerald-900/30 transition-transform active:scale-95"
+                    onClick={() => setShowMobileSidebar(v => !v)}
+                    aria-label="에코 패널 열기"
+                >
+                    {showMobileSidebar
+                        ? <X className="h-6 w-6" />
+                        : <Sparkles className="h-6 w-6" />
+                    }
+                </button>
+            )}
 
             {/* Chapter Interview Modal */}
             <AnimatePresence>

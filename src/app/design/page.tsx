@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBookStore, useCurrentProject } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, ArrowRight, ArrowLeft, BookOpen, PenTool, LayoutTemplate, AlignLeft, Info, Palette, Type, ArrowUpToLine, AlignVerticalJustifyCenter, ArrowDownToLine, ChevronDown, Italic, SlidersHorizontal, ZoomIn, ZoomOut, Ruler, Save, Home, Check, Upload, Undo2, Redo2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, ArrowLeft, BookOpen, PenTool, LayoutTemplate, AlignLeft, Info, Palette, Type, ArrowUpToLine, AlignVerticalJustifyCenter, ArrowDownToLine, ChevronDown, Italic, SlidersHorizontal, ZoomIn, ZoomOut, Ruler, Save, Home, Check, Upload, Undo2, Redo2, Download } from 'lucide-react';
 import ProgressStepper from '@/components/ProgressStepper';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -126,11 +126,212 @@ const GENRE_TEMPLATES = [
 
 type OrnamentKey = 'none' | 'thin-line' | 'double-line' | 'corner' | 'vintage-border' | 'diamond';
 
+type TypographyStyle = {
+    size: number; weight: number; spacing: number; lineHeight: number;
+    italic: boolean; transform: 'none' | 'uppercase' | 'lowercase';
+};
+
+const htmlImgCache = new Map<string, HTMLImageElement>();
+
+const applyTT = (text: string, t: 'none' | 'uppercase' | 'lowercase') =>
+    t === 'uppercase' ? text.toUpperCase() : t === 'lowercase' ? text.toLowerCase() : text;
+
+type FabricCoverProps = {
+    canvasW: number; canvasH: number;
+    primaryColor: string;
+    resolvedTextColor: string; resolvedAccentColor: string;
+    title: string; frontSubtitle: string; author: string;
+    titleStyle: TypographyStyle; subtitleStyle: TypographyStyle; authorStyle: TypographyStyle;
+    selectedFontFamily: string; formatScale: number;
+    bgImageUrl: string | null; bgBrightness: number;
+    selectedOrnament: OrnamentKey;
+    textGroupPos: { x: number; y: number } | null;
+    textShadow: boolean; textAlign: 'left' | 'center' | 'right'; textPosition: 'top' | 'center' | 'bottom';
+    onPosChange: (pos: { x: number; y: number }) => void;
+    onExportReady: (fn: () => string) => void;
+};
+
+function FabricCoverCanvas({
+    canvasW, canvasH, primaryColor, resolvedTextColor, resolvedAccentColor,
+    title, frontSubtitle, author, titleStyle, subtitleStyle, authorStyle,
+    selectedFontFamily, formatScale, bgImageUrl, bgBrightness, selectedOrnament,
+    textGroupPos, textShadow, textAlign, textPosition, onPosChange, onExportReady,
+}: FabricCoverProps) {
+    const elRef = useRef<HTMLCanvasElement>(null);
+    const fabricRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (!elRef.current) return;
+        let cancelled = false;
+        let localCanvas: any = null;
+
+        const build = async () => {
+            // Load background image with cache (avoids repeated network fetches)
+            let htmlImg: HTMLImageElement | null = null;
+            if (bgImageUrl) {
+                htmlImg = htmlImgCache.get(bgImageUrl) || null;
+                if (!htmlImg) {
+                    try {
+                        htmlImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+                            const img = new window.Image();
+                            img.crossOrigin = 'anonymous';
+                            img.onload = () => resolve(img);
+                            img.onerror = reject;
+                            img.src = bgImageUrl;
+                        });
+                        htmlImgCache.set(bgImageUrl, htmlImg);
+                    } catch { htmlImg = null; }
+                }
+            }
+            if (cancelled) return;
+
+            const { Canvas, Rect, Textbox, Shadow, Line, FabricImage } = await import('fabric');
+            if (cancelled || !elRef.current) return;
+
+            // Dispose previous canvas
+            if (fabricRef.current) { try { fabricRef.current.dispose(); } catch {} fabricRef.current = null; }
+            if (cancelled) return;
+
+            const fc = new Canvas(elRef.current, { width: canvasW, height: canvasH, selection: false });
+            if (cancelled) { try { fc.dispose(); } catch {}; return; }
+            localCanvas = fc;
+            fabricRef.current = fc;
+
+            // Background color
+            fc.add(new Rect({ left: 0, top: 0, width: canvasW, height: canvasH, fill: primaryColor, selectable: false, evented: false }));
+
+            // Background image
+            if (htmlImg) {
+                const s = Math.max(canvasW / (htmlImg.naturalWidth || 1), canvasH / (htmlImg.naturalHeight || 1));
+                const fimg = new FabricImage(htmlImg as any, {
+                    scaleX: s, scaleY: s, left: canvasW / 2, top: canvasH / 2,
+                    originX: 'center', originY: 'center', selectable: false, evented: false,
+                } as any);
+                fc.add(fimg);
+                const alpha = (100 - bgBrightness) / 100 * 0.65;
+                if (alpha > 0.01) fc.add(new Rect({ left: 0, top: 0, width: canvasW, height: canvasH, fill: `rgba(0,0,0,${alpha.toFixed(2)})`, selectable: false, evented: false }));
+            }
+
+            // Ornaments
+            const ac = resolvedAccentColor;
+            const addL = (x1: number, y1: number, x2: number, y2: number, op = 0.6) =>
+                fc.add(new Line([x1, y1, x2, y2] as any, { stroke: ac, strokeWidth: 1, opacity: op, selectable: false, evented: false }));
+
+            if (selectedOrnament === 'thin-line') addL(canvasW * 0.08, canvasH * 0.2, canvasW * 0.92, canvasH * 0.2);
+            if (selectedOrnament === 'double-line') { addL(canvasW * 0.08, canvasH * 0.18, canvasW * 0.92, canvasH * 0.18, 0.5); addL(canvasW * 0.08, canvasH * 0.21, canvasW * 0.92, canvasH * 0.21, 0.5); }
+            if (selectedOrnament === 'corner') {
+                const p = 12, sz = 24;
+                [[p, p, p + sz, p], [p, p, p, p + sz], [canvasW - p - sz, p, canvasW - p, p], [canvasW - p, p, canvasW - p, p + sz],
+                 [p, canvasH - p, p + sz, canvasH - p], [p, canvasH - p - sz, p, canvasH - p],
+                 [canvasW - p - sz, canvasH - p, canvasW - p, canvasH - p], [canvasW - p, canvasH - p - sz, canvasW - p, canvasH - p],
+                ].forEach(([x1, y1, x2, y2]) => addL(x1, y1, x2, y2, 0.7));
+            }
+            if (selectedOrnament === 'vintage-border') {
+                const p = 10;
+                [[p, p, canvasW - p, p], [canvasW - p, p, canvasW - p, canvasH - p], [canvasW - p, canvasH - p, p, canvasH - p], [p, canvasH - p, p, p]].forEach(([x1, y1, x2, y2]) => addL(x1, y1, x2, y2, 0.5));
+            }
+            if (selectedOrnament === 'diamond') fc.add(new Rect({ left: canvasW / 2, top: canvasH * 0.19, width: 10, height: 10, fill: ac, opacity: 0.7, angle: 45, originX: 'center', originY: 'center', selectable: false, evented: false }));
+
+            // Text positioning
+            const tx = textGroupPos ? (textGroupPos.x / 100) * canvasW : canvasW / 2;
+            const ty = textGroupPos ? (textGroupPos.y / 100) * canvasH
+                : textPosition === 'top' ? canvasH * 0.22 : textPosition === 'bottom' ? canvasH * 0.74 : canvasH * 0.46;
+
+            const shad = textShadow ? new Shadow({ color: 'rgba(0,0,0,0.5)', blur: 8, offsetX: 2, offsetY: 2 }) : undefined;
+            const ta: 'left' | 'center' | 'right' = textAlign;
+            const tw = canvasW * 0.8;
+            const tfs = Math.max(8, Math.round(titleStyle.size * formatScale));
+            const sfs = Math.max(6, Math.round(subtitleStyle.size * formatScale));
+            const afs = Math.max(6, Math.round(authorStyle.size * formatScale));
+
+            const titleStr = applyTT(title || '제목', titleStyle.transform);
+            const subtitleStr = applyTT(frontSubtitle || '', subtitleStyle.transform);
+            const authorStr = applyTT(author || '', authorStyle.transform);
+
+            const titleObj = new Textbox(titleStr, {
+                left: tx, top: ty, originX: 'center', originY: 'center', width: tw,
+                fontSize: tfs, fontFamily: selectedFontFamily, fontWeight: String(titleStyle.weight) as any,
+                fill: resolvedTextColor, textAlign: ta,
+                charSpacing: titleStyle.spacing * 10, lineHeight: titleStyle.lineHeight / 100,
+                fontStyle: titleStyle.italic ? 'italic' : 'normal', shadow: shad,
+                selectable: true, hasControls: false, hasBorders: true,
+                lockScalingX: true, lockScalingY: true, lockRotation: true,
+                borderColor: 'rgba(255,255,255,0.5)', padding: 4,
+            } as any);
+
+            // Estimate title block height for stacking below
+            const charsPerLine = Math.max(1, Math.floor(tw / (tfs * 0.9)));
+            const titleLines = Math.max(1, Math.ceil(titleStr.length / charsPerLine));
+            const titleBlockH = titleLines * tfs * (titleStyle.lineHeight / 100);
+
+            const subtitleObj = new Textbox(subtitleStr, {
+                left: tx, top: ty + titleBlockH / 2 + 10, originX: 'center', originY: 'top', width: tw,
+                fontSize: sfs, fontFamily: selectedFontFamily, fontWeight: String(subtitleStyle.weight) as any,
+                fill: resolvedAccentColor, textAlign: ta,
+                charSpacing: subtitleStyle.spacing * 10, lineHeight: subtitleStyle.lineHeight / 100,
+                fontStyle: subtitleStyle.italic ? 'italic' : 'normal', opacity: 0.85,
+                selectable: false, evented: false,
+            } as any);
+
+            const subtitleH = subtitleStr ? sfs * (subtitleStyle.lineHeight / 100) + 10 : 0;
+
+            const authorObj = new Textbox(authorStr, {
+                left: tx, top: ty + titleBlockH / 2 + subtitleH + 18, originX: 'center', originY: 'top', width: tw,
+                fontSize: afs, fontFamily: selectedFontFamily, fontWeight: String(authorStyle.weight) as any,
+                fill: resolvedTextColor, textAlign: ta,
+                charSpacing: authorStyle.spacing * 10, shadow: shad,
+                selectable: false, evented: false,
+            } as any);
+
+            fc.add(titleObj, subtitleObj, authorObj);
+
+            // Publisher text
+            fc.add(new Textbox('LEAFNOTE', {
+                left: canvasW / 2, top: canvasH - 12, originX: 'center', originY: 'bottom', width: canvasW * 0.9,
+                fontSize: 7, fontFamily: 'monospace', fill: resolvedTextColor,
+                textAlign: 'center', charSpacing: 200, opacity: 0.35, selectable: false, evented: false,
+            } as any));
+
+            // Drag → update parent position state
+            fc.on('object:modified', (e: any) => {
+                if (e.target === titleObj) {
+                    onPosChange({ x: ((e.target.left || 0) / canvasW) * 100, y: ((e.target.top || 0) / canvasH) * 100 });
+                }
+            });
+
+            // Export: 3× resolution PNG
+            onExportReady(() => fc.toDataURL({ format: 'png', multiplier: 3 }));
+            fc.renderAll();
+        };
+
+        build().catch(console.error);
+
+        return () => {
+            cancelled = true;
+            if (localCanvas) { try { localCanvas.dispose(); } catch {} }
+            else if (fabricRef.current) { try { fabricRef.current.dispose(); } catch {} }
+            fabricRef.current = null;
+        };
+    }, [
+        canvasW, canvasH, primaryColor, resolvedTextColor, resolvedAccentColor,
+        title, frontSubtitle, author,
+        titleStyle.size, titleStyle.weight, titleStyle.spacing, titleStyle.lineHeight, titleStyle.italic, titleStyle.transform,
+        subtitleStyle.size, subtitleStyle.weight, subtitleStyle.spacing, subtitleStyle.lineHeight, subtitleStyle.italic, subtitleStyle.transform,
+        authorStyle.size, authorStyle.weight, authorStyle.spacing, authorStyle.lineHeight, authorStyle.italic, authorStyle.transform,
+        selectedFontFamily, formatScale, bgImageUrl, bgBrightness, selectedOrnament,
+        textGroupPos?.x, textGroupPos?.y,
+        textShadow, textAlign, textPosition,
+    ]);
+
+    return <canvas ref={elRef} style={{ display: 'block', maxWidth: '100%' }} />;
+}
+
 export default function DesignPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const currentProject = useCurrentProject();
     const { setCoverDesign, setCoverImageUrl } = useBookStore();
+    const exportFnRef = useRef<(() => string) | null>(null);
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [isImageLoading, setIsImageLoading] = useState(false); // To track the actual image load
@@ -167,11 +368,11 @@ export default function DesignPage() {
 
     // Per-element typography styles
     const [editTarget, setEditTarget] = useState<'title' | 'subtitle' | 'backBlurb' | 'spineTitle' | 'author'>('title');
-    const [titleStyle, setTitleStyle] = useState({ size: 28, weight: 700, spacing: 0, lineHeight: 140, italic: false, transform: 'none' as 'none' | 'uppercase' | 'lowercase' });
-    const [subtitleStyle, setSubtitleStyle] = useState({ size: 12, weight: 400, spacing: 5, lineHeight: 150, italic: false, transform: 'uppercase' as 'none' | 'uppercase' | 'lowercase' });
-    const [authorStyle, setAuthorStyle] = useState({ size: 16, weight: 400, spacing: 8, lineHeight: 140, italic: false, transform: 'none' as 'none' | 'uppercase' | 'lowercase' });
-    const [backBlurbStyle, setBackBlurbStyle] = useState({ size: 14, weight: 400, spacing: 0, lineHeight: 170, italic: false, transform: 'none' as 'none' | 'uppercase' | 'lowercase' });
-    const [spineTitleStyle, setSpineTitleStyle] = useState({ size: 12, weight: 700, spacing: 10, lineHeight: 140, italic: false, transform: 'none' as 'none' | 'uppercase' | 'lowercase' });
+    const [titleStyle, setTitleStyle] = useState<TypographyStyle>({ size: 28, weight: 700, spacing: 0, lineHeight: 140, italic: false, transform: 'none' });
+    const [subtitleStyle, setSubtitleStyle] = useState<TypographyStyle>({ size: 12, weight: 400, spacing: 5, lineHeight: 150, italic: false, transform: 'uppercase' });
+    const [authorStyle, setAuthorStyle] = useState<TypographyStyle>({ size: 16, weight: 400, spacing: 8, lineHeight: 140, italic: false, transform: 'none' });
+    const [backBlurbStyle, setBackBlurbStyle] = useState<TypographyStyle>({ size: 14, weight: 400, spacing: 0, lineHeight: 170, italic: false, transform: 'none' });
+    const [spineTitleStyle, setSpineTitleStyle] = useState<TypographyStyle>({ size: 12, weight: 700, spacing: 10, lineHeight: 140, italic: false, transform: 'none' });
 
     // Effects
     const [textShadow, setTextShadow] = useState(false);
@@ -410,6 +611,16 @@ export default function DesignPage() {
         router.push('/export');
     };
 
+    const handleExportCover = useCallback(() => {
+        if (!exportFnRef.current) { alert('캔버스가 아직 준비되지 않았습니다.'); return; }
+        const dataUrl = exportFnRef.current();
+        const link = document.createElement('a');
+        link.download = `${currentProject?.title || '표지'}-cover.png`;
+        link.href = dataUrl;
+        link.click();
+        setCoverImageUrl(dataUrl);
+    }, [currentProject?.title, setCoverImageUrl]);
+
     const captureSnapshot = useCallback((): DesignSnapshot => ({
         designParams, selectedFont, textPosition, textAlign,
         titleStyle, subtitleStyle, authorStyle,
@@ -535,6 +746,9 @@ export default function DesignPage() {
                     </Button>
                     <Button variant="ghost" size="sm" onClick={handleRedo} disabled={designHistoryIndex >= designHistory.length - 1} title="다시 실행" className="hidden sm:flex">
                         <Redo2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExportCover} className="flex-1 sm:flex-none" title="앞면 고화질 PNG 다운로드">
+                        <Download className="mr-1 h-4 w-4" /> 고화질
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleSave} className="flex-1 sm:flex-none">
                         {isSaved ? <><Check className="mr-1 h-4 w-4 text-emerald-500" /> 저장됨</> : <><Save className="mr-1 h-4 w-4" /> 저장</>}
@@ -946,128 +1160,50 @@ export default function DesignPage() {
                     <div className="flex-1 w-full flex items-center justify-center overflow-auto p-4">
                         <div className="transition-transform duration-300 origin-center" style={{ transform: `scale(${zoomLevel})` }}>
                             <div className="flex items-stretch gap-0 shadow-2xl overflow-hidden transition-all duration-500">
-                                {/* 2D FRONT */}
-                                {(viewAngle === '2d' || viewAngle === 'front') && <div
-                                    ref={frontCoverRef}
-                                    className="relative overflow-hidden"
-                                    style={{
-                                        width: `${viewAngle === 'front' ? Math.round(panelW * 1.35) : panelW}px`,
-                                        height: `${viewAngle === 'front' ? Math.round(panelH * 1.35) : panelH}px`,
-                                        background: bgImageUrl ? `url(${bgImageUrl}) center/cover no-repeat` : `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                        cursor: isDraggingText ? 'grabbing' : 'default',
-                                    }}
-                                    onMouseMove={handleCoverMouseMove}
-                                    onMouseUp={handleCoverMouseUp}
-                                    onMouseLeave={handleCoverMouseUp}
-                                >
-                                    {bgImageUrl && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${(100 - bgBrightness) / 100})` }}></div>}
-                                    <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: textureUrl }}></div>
-
-                                    {/* Ornament overlay */}
-                                    {selectedOrnament === 'thin-line' && (
-                                        <div style={{ position: 'absolute', top: '20%', left: '8%', right: '8%', height: 1, backgroundColor: resolvedAccentColor, opacity: 0.6, zIndex: 5 }} />
-                                    )}
-                                    {selectedOrnament === 'double-line' && (<>
-                                        <div style={{ position: 'absolute', top: '18%', left: '8%', right: '8%', height: 1, backgroundColor: resolvedAccentColor, opacity: 0.5, zIndex: 5 }} />
-                                        <div style={{ position: 'absolute', top: '21%', left: '8%', right: '8%', height: 1, backgroundColor: resolvedAccentColor, opacity: 0.5, zIndex: 5 }} />
-                                    </>)}
-                                    {selectedOrnament === 'corner' && (<>
-                                        <div style={{ position: 'absolute', top: 12, left: 12, width: 28, height: 28, borderTop: `2px solid ${resolvedAccentColor}`, borderLeft: `2px solid ${resolvedAccentColor}`, opacity: 0.7, zIndex: 5 }} />
-                                        <div style={{ position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderTop: `2px solid ${resolvedAccentColor}`, borderRight: `2px solid ${resolvedAccentColor}`, opacity: 0.7, zIndex: 5 }} />
-                                        <div style={{ position: 'absolute', bottom: 12, left: 12, width: 28, height: 28, borderBottom: `2px solid ${resolvedAccentColor}`, borderLeft: `2px solid ${resolvedAccentColor}`, opacity: 0.7, zIndex: 5 }} />
-                                        <div style={{ position: 'absolute', bottom: 12, right: 12, width: 28, height: 28, borderBottom: `2px solid ${resolvedAccentColor}`, borderRight: `2px solid ${resolvedAccentColor}`, opacity: 0.7, zIndex: 5 }} />
-                                    </>)}
-                                    {selectedOrnament === 'vintage-border' && (
-                                        <div style={{ position: 'absolute', inset: 10, border: `1px solid ${resolvedAccentColor}`, opacity: 0.5, zIndex: 5, pointerEvents: 'none' }} />
-                                    )}
-                                    {selectedOrnament === 'diamond' && (
-                                        <div style={{ position: 'absolute', top: '19%', left: '50%', transform: 'translate(-50%, -50%) rotate(45deg)', width: 10, height: 10, backgroundColor: resolvedAccentColor, opacity: 0.7, zIndex: 5 }} />
-                                    )}
-
-                                    {/* Draggable text group */}
-                                    {textGroupPos ? (
-                                        <div
-                                            className="absolute z-10"
-                                            style={{
-                                                left: `${textGroupPos.x}%`,
-                                                top: `${textGroupPos.y}%`,
-                                                transform: 'translate(-50%, -50%)',
-                                                cursor: isDraggingText ? 'grabbing' : 'grab',
-                                                userSelect: 'none',
-                                                padding: '6px',
-                                                borderRadius: '4px',
-                                                border: '1px dashed rgba(255,255,255,0.35)',
-                                                textAlign: textAlign === 'left' ? 'left' : textAlign === 'right' ? 'right' : 'center',
-                                                width: '80%',
-                                            }}
-                                            onMouseDown={handleTextMouseDown}
-                                        >
-                                            <div className={`${style.layout === 'elegant' ? 'border p-5' : ''} w-full`} style={{ borderColor: `${resolvedAccentColor}40` }}>
-                                                {style.layout === 'elegant' && <p className="text-xs italic mb-4 opacity-80" style={{ color: resolvedTextColor, fontFamily: selectedFontFamily }}>Memoir Collection</p>}
-                                                <h1 className="break-keep mb-3" style={{ fontFamily: selectedFontFamily, fontSize: `${Math.round(titleStyle.size * formatScale)}px`, fontWeight: titleStyle.weight, letterSpacing: `${titleStyle.spacing / 100}em`, lineHeight: `${titleStyle.lineHeight}%`, fontStyle: titleStyle.italic ? 'italic' : 'normal', textTransform: titleStyle.transform, color: resolvedTextColor, textShadow: textShadow ? '0 2px 8px rgba(0,0,0,0.5)' : 'none' }}>{displayTitle}</h1>
-                                                <p className="break-keep" style={{ fontFamily: selectedFontFamily, fontSize: `${Math.round(subtitleStyle.size * formatScale)}px`, fontWeight: subtitleStyle.weight, letterSpacing: `${subtitleStyle.spacing / 100}em`, lineHeight: `${subtitleStyle.lineHeight}%`, fontStyle: subtitleStyle.italic ? 'italic' : 'normal', textTransform: subtitleStyle.transform, color: resolvedAccentColor, opacity: 0.8, textShadow: textShadow ? '0 1px 4px rgba(0,0,0,0.4)' : 'none' }}>{generatedTexts.frontSubtitle}</p>
-                                            </div>
-                                            <div className="mt-4">
-                                                {style.layout === 'classic' && <div className="w-10 h-[1px] mx-auto mb-3" style={{ backgroundColor: resolvedAccentColor }}></div>}
-                                                <p style={{ fontFamily: selectedFontFamily, fontSize: `${Math.round(authorStyle.size * formatScale)}px`, fontWeight: authorStyle.weight, letterSpacing: `${authorStyle.spacing / 100}em`, lineHeight: `${authorStyle.lineHeight}%`, fontStyle: authorStyle.italic ? 'italic' : 'normal', textTransform: authorStyle.transform, color: resolvedTextColor, textShadow: textShadow ? '0 1px 4px rgba(0,0,0,0.4)' : 'none' }}>{displayAuthor}</p>
-                                            </div>
+                                {/* 2D FRONT — Fabric.js Canvas */}
+                                {(viewAngle === '2d' || viewAngle === 'front') && (
+                                    <div
+                                        style={{
+                                            width: viewAngle === 'front' ? Math.round(panelW * 1.35) : panelW,
+                                            height: viewAngle === 'front' ? Math.round(panelH * 1.35) : panelH,
+                                            overflow: 'hidden',
+                                            position: 'relative',
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        <div style={{
+                                            transformOrigin: '0 0',
+                                            transform: viewAngle === 'front' ? 'scale(1.35)' : 'scale(1)',
+                                            width: panelW,
+                                            height: panelH,
+                                        }}>
+                                            <FabricCoverCanvas
+                                                canvasW={panelW}
+                                                canvasH={panelH}
+                                                primaryColor={colors.primary}
+                                                resolvedTextColor={resolvedTextColor}
+                                                resolvedAccentColor={resolvedAccentColor}
+                                                title={displayTitle}
+                                                frontSubtitle={generatedTexts.frontSubtitle}
+                                                author={displayAuthor}
+                                                titleStyle={titleStyle}
+                                                subtitleStyle={subtitleStyle}
+                                                authorStyle={authorStyle}
+                                                selectedFontFamily={selectedFontFamily}
+                                                formatScale={formatScale}
+                                                bgImageUrl={bgImageUrl}
+                                                bgBrightness={bgBrightness}
+                                                selectedOrnament={selectedOrnament}
+                                                textGroupPos={textGroupPos}
+                                                textShadow={textShadow}
+                                                textAlign={textAlign}
+                                                textPosition={textPosition}
+                                                onPosChange={(pos) => { pushDesignHistory(); setTextGroupPos(pos); }}
+                                                onExportReady={(fn) => { exportFnRef.current = fn; }}
+                                            />
                                         </div>
-                                    ) : (
-                                        <div
-                                            className={`absolute inset-0 p-8 flex flex-col z-10 ${textPosition === 'top' ? 'justify-start mt-6' : textPosition === 'bottom' ? 'justify-end mb-6' : 'justify-center'} ${textAlign === 'left' ? 'items-start text-left' : textAlign === 'right' ? 'items-end text-right' : 'items-center text-center'}`}
-                                            style={{ cursor: 'grab', userSelect: 'none' }}
-                                            onMouseDown={handleTextMouseDown}
-                                            title="드래그하여 텍스트 위치 변경"
-                                        >
-                                            <div className={`${style.layout === 'elegant' ? 'border p-5' : ''} w-full`} style={{ borderColor: `${resolvedAccentColor}40` }}>
-                                                {style.layout === 'elegant' && <p className="text-xs italic mb-4 opacity-80" style={{ color: resolvedTextColor, fontFamily: selectedFontFamily }}>Memoir Collection</p>}
-                                                <h1 className="break-keep mb-3" style={{
-                                                    fontFamily: selectedFontFamily,
-                                                    fontSize: `${Math.round(titleStyle.size * formatScale)}px`,
-                                                    fontWeight: titleStyle.weight,
-                                                    letterSpacing: `${titleStyle.spacing / 100}em`,
-                                                    lineHeight: `${titleStyle.lineHeight}%`,
-                                                    fontStyle: titleStyle.italic ? 'italic' : 'normal',
-                                                    textTransform: titleStyle.transform,
-                                                    color: resolvedTextColor,
-                                                    textShadow: textShadow ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-                                                }}>
-                                                    {displayTitle}
-                                                </h1>
-                                                <p className="break-keep" style={{
-                                                    fontFamily: selectedFontFamily,
-                                                    fontSize: `${Math.round(subtitleStyle.size * formatScale)}px`,
-                                                    fontWeight: subtitleStyle.weight,
-                                                    letterSpacing: `${subtitleStyle.spacing / 100}em`,
-                                                    lineHeight: `${subtitleStyle.lineHeight}%`,
-                                                    fontStyle: subtitleStyle.italic ? 'italic' : 'normal',
-                                                    textTransform: subtitleStyle.transform,
-                                                    color: resolvedAccentColor,
-                                                    opacity: 0.8,
-                                                    textShadow: textShadow ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
-                                                }}>
-                                                    {generatedTexts.frontSubtitle}
-                                                </p>
-                                            </div>
-                                            <div className="mt-8">
-                                                {style.layout === 'classic' && <div className="w-10 h-[1px] mx-auto mb-4" style={{ backgroundColor: resolvedAccentColor }}></div>}
-                                                <p style={{
-                                                    fontFamily: selectedFontFamily,
-                                                    fontSize: `${Math.round(authorStyle.size * formatScale)}px`,
-                                                    fontWeight: authorStyle.weight,
-                                                    letterSpacing: `${authorStyle.spacing / 100}em`,
-                                                    lineHeight: `${authorStyle.lineHeight}%`,
-                                                    fontStyle: authorStyle.italic ? 'italic' : 'normal',
-                                                    textTransform: authorStyle.transform,
-                                                    color: resolvedTextColor,
-                                                    textShadow: textShadow ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
-                                                }}>
-                                                    {displayAuthor}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>}
+                                    </div>
+                                )}
 
                                 {/* 2D SPINE */}
                                 {(viewAngle === '2d' || viewAngle === 'spine') && <div
