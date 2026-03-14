@@ -789,30 +789,33 @@ export default function DesignPage() {
                     <h1 className="text-xl md:text-2xl font-serif font-bold text-slate-800">표지 디자인</h1>
                     <p className="text-xs text-slate-400">에코(AI)와 함께 나만의 표지를 디자인합니다.</p>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="hidden sm:flex text-slate-500 hover:text-slate-800">
-                        <Home className="mr-1 h-4 w-4" /> 대시보드
+                <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="shrink-0 text-slate-500 hover:text-slate-800" title="대시보드">
+                        <Home className="h-4 w-4" /><span className="hidden sm:inline ml-1">대시보드</span>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={handleUndo} disabled={designHistoryIndex <= 0} title="실행 취소" className="hidden sm:flex">
+                    <Button variant="ghost" size="sm" onClick={handleUndo} disabled={designHistoryIndex <= 0} title="실행 취소" className="hidden sm:flex shrink-0">
                         <Undo2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={handleRedo} disabled={designHistoryIndex >= designHistory.length - 1} title="다시 실행" className="hidden sm:flex">
+                    <Button variant="ghost" size="sm" onClick={handleRedo} disabled={designHistoryIndex >= designHistory.length - 1} title="다시 실행" className="hidden sm:flex shrink-0">
                         <Redo2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleExportCover} className="flex-1 sm:flex-none" title="앞면 고화질 PNG 다운로드">
-                        <Download className="mr-1 h-4 w-4" /> 고화질
+                    <Button variant="outline" size="sm" onClick={handleExportCover} className="shrink-0" title="앞면 고화질 PNG 다운로드">
+                        <Download className="h-4 w-4" /><span className="hidden sm:inline ml-1">고화질</span>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={handleResetDesign} title="디자인 초기화" className="flex-1 sm:flex-none text-slate-500 hover:text-red-500">
-                        <RotateCcw className="mr-1 h-4 w-4" /> 초기화
+                    <Button variant="ghost" size="sm" onClick={handleResetDesign} title="디자인 초기화" className="shrink-0 text-slate-500 hover:text-red-500">
+                        <RotateCcw className="h-4 w-4" /><span className="hidden sm:inline ml-1">초기화</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleSave} className="flex-1 sm:flex-none">
-                        {isSaved ? <><Check className="mr-1 h-4 w-4 text-emerald-500" /> 저장됨</> : <><Save className="mr-1 h-4 w-4" /> 저장</>}
+                    <Button variant="outline" size="sm" onClick={handleSave} className="shrink-0" title="저장">
+                        {isSaved ? <Check className="h-4 w-4 text-emerald-500" /> : <Save className="h-4 w-4" />}
+                        <span className="hidden sm:inline ml-1">{isSaved ? '저장됨' : '저장'}</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => router.push('/editor')} className="flex-1 sm:flex-none">
+                    <Button variant="outline" size="sm" onClick={() => router.push('/editor')} className="hidden sm:flex shrink-0">
                         <ArrowLeft className="mr-1 h-4 w-4" /> 원고 교정
                     </Button>
-                    <Button size="sm" onClick={handlePublish} className="flex-1 sm:flex-none bg-emerald-700 hover:bg-emerald-800 text-white shadow-md">
-                        출판 및 배포 <ArrowRight className="ml-1 h-4 w-4" />
+                    <Button size="sm" onClick={handlePublish} className="shrink-0 bg-emerald-700 hover:bg-emerald-800 text-white shadow-md">
+                        <span className="hidden sm:inline">출판 및 배포 </span>
+                        <span className="sm:hidden">배포</span>
+                        <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                 </div>
             </header>
@@ -1020,7 +1023,7 @@ export default function DesignPage() {
                         </h3>
                         <div className="grid grid-cols-4 gap-1">
                             {([['all', '전체'], ['serif', '명조'], ['sans', '고딕'], ['hand', '손글씨']] as const).map(([cat, label]) => (
-                                <button key={cat} onClick={() => setFontCategory(cat)} className={`h-8 rounded-lg text-xs font-bold transition-all ${fontCategory === cat ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                                <button key={cat} onClick={() => setFontCategory(cat)} className={`h-9 sm:h-8 rounded-lg text-xs font-bold transition-all ${fontCategory === cat ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                                     {label}
                                 </button>
                             ))}
@@ -1077,9 +1080,9 @@ export default function DesignPage() {
                         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mt-1">
                             <SlidersHorizontal className="h-4 w-4 text-emerald-500" /> 요소별 스타일
                         </h3>
-                        <div className="grid grid-cols-5 gap-1">
+                        <div className="flex flex-wrap gap-1">
                             {([['title', '제목'], ['subtitle', '부제'], ['backBlurb', '추천사'], ['spineTitle', '책등'], ['author', '저자']] as const).map(([key, label]) => (
-                                <button key={key} onClick={() => setEditTarget(key)} className={`h-9 rounded-lg text-xs font-bold transition-all ${editTarget === key ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                                <button key={key} onClick={() => setEditTarget(key)} className={`flex-1 min-w-[calc(33%-4px)] h-9 rounded-lg text-xs font-bold transition-all ${editTarget === key ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                                     {label}
                                 </button>
                             ))}
@@ -1101,28 +1104,28 @@ export default function DesignPage() {
                                             <span className="font-bold text-slate-500">크기</span>
                                             <span className="text-slate-400 tabular-nums">{current.size}px</span>
                                         </div>
-                                        <input type="range" min={sizeRange[0]} max={sizeRange[1]} step={1} value={current.size} onChange={e => update('size', Number(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
+                                        <input type="range" min={sizeRange[0]} max={sizeRange[1]} step={1} value={current.size} onChange={e => update('size', Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
                                             <span className="font-bold text-slate-500">굵기</span>
                                             <span className="text-slate-400 tabular-nums">{WEIGHT_LABELS[current.weight] || current.weight}</span>
                                         </div>
-                                        <input type="range" min={100} max={900} step={100} value={current.weight} onChange={e => update('weight', Number(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
+                                        <input type="range" min={100} max={900} step={100} value={current.weight} onChange={e => update('weight', Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
                                             <span className="font-bold text-slate-500">자간</span>
                                             <span className="text-slate-400 tabular-nums">{(current.spacing / 100).toFixed(2)}em</span>
                                         </div>
-                                        <input type="range" min={-5} max={30} step={1} value={current.spacing} onChange={e => update('spacing', Number(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
+                                        <input type="range" min={-5} max={30} step={1} value={current.spacing} onChange={e => update('spacing', Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
                                             <span className="font-bold text-slate-500">줄간격</span>
                                             <span className="text-slate-400 tabular-nums">{current.lineHeight}%</span>
                                         </div>
-                                        <input type="range" min={100} max={220} step={5} value={current.lineHeight} onChange={e => update('lineHeight', Number(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
+                                        <input type="range" min={100} max={220} step={5} value={current.lineHeight} onChange={e => update('lineHeight', Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
                                     </div>
                                     <div className="flex gap-3 items-center pt-1">
                                         <button onClick={() => update('italic', !current.italic)} className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${current.italic ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100'}`}>
@@ -1181,7 +1184,7 @@ export default function DesignPage() {
                                     <span className="font-bold text-slate-500">배경 밝기</span>
                                     <span className="text-slate-400 tabular-nums">{bgBrightness}%</span>
                                 </div>
-                                <input type="range" min={20} max={100} step={5} value={bgBrightness} onChange={e => setBgBrightness(Number(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
+                                <input type="range" min={20} max={100} step={5} value={bgBrightness} onChange={e => setBgBrightness(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-600" />
                             </div>
                         </div>
 
@@ -1193,15 +1196,15 @@ export default function DesignPage() {
                             <div>
                                 <label className="text-xs font-bold text-slate-500 mb-1.5 block">제목색</label>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => setCustomTextColor(null)} className={`h-8 w-8 rounded-lg border-2 ${!customTextColor ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-slate-200'}`} style={{ backgroundColor: colors.textFront }} title="AI 추천" />
-                                    <input type="color" value={customTextColor || colors.textFront} onChange={e => setCustomTextColor(e.target.value)} className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0" />
+                                    <button onClick={() => setCustomTextColor(null)} className={`h-10 w-10 sm:h-8 sm:w-8 rounded-lg border-2 ${!customTextColor ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-slate-200'}`} style={{ backgroundColor: colors.textFront }} title="AI 추천" />
+                                    <input type="color" value={customTextColor || colors.textFront} onChange={e => setCustomTextColor(e.target.value)} className="h-10 w-10 sm:h-8 sm:w-8 rounded-lg cursor-pointer border-0 p-0" />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 mb-1.5 block">강조색</label>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => setCustomAccentColor(null)} className={`h-8 w-8 rounded-lg border-2 ${!customAccentColor ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-slate-200'}`} style={{ backgroundColor: colors.accent }} title="AI 추천" />
-                                    <input type="color" value={customAccentColor || colors.accent} onChange={e => setCustomAccentColor(e.target.value)} className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0" />
+                                    <button onClick={() => setCustomAccentColor(null)} className={`h-10 w-10 sm:h-8 sm:w-8 rounded-lg border-2 ${!customAccentColor ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-slate-200'}`} style={{ backgroundColor: colors.accent }} title="AI 추천" />
+                                    <input type="color" value={customAccentColor || colors.accent} onChange={e => setCustomAccentColor(e.target.value)} className="h-10 w-10 sm:h-8 sm:w-8 rounded-lg cursor-pointer border-0 p-0" />
                                 </div>
                             </div>
                         </div>
@@ -1341,22 +1344,22 @@ export default function DesignPage() {
                     </div>
 
                     {/* View Controls + Zoom */}
-                    <div className="absolute bottom-4 sm:bottom-8 left-0 w-full flex justify-center items-center gap-3 px-4 z-20">
-                        <div className="bg-white/90 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl shadow-xl border border-white/50 flex gap-0.5 sm:gap-1 isolate scale-90 sm:scale-100">
-                            <Button variant={viewAngle === '2d' ? 'default' : 'ghost'} onClick={() => setViewAngle('2d')} className={`rounded-xl font-bold ${viewAngle === '2d' ? 'bg-slate-800 text-white shadow-inner' : 'text-slate-600 hover:text-slate-900'}`}>
-                                <BookOpen className="mr-2 h-4 w-4" /> 전체
+                    <div className="absolute bottom-4 sm:bottom-6 left-0 w-full flex justify-center items-center gap-2 px-4 z-20">
+                        <div className="bg-white/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl shadow-xl border border-white/50 flex gap-0.5 isolate">
+                            <Button variant={viewAngle === '2d' ? 'default' : 'ghost'} size="sm" onClick={() => setViewAngle('2d')} className={`rounded-xl font-bold px-2 sm:px-3 text-xs sm:text-sm ${viewAngle === '2d' ? 'bg-slate-800 text-white shadow-inner' : 'text-slate-600 hover:text-slate-900'}`}>
+                                <BookOpen className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> 전체
                             </Button>
-                            <div className="w-px bg-slate-200 my-2 mx-1"></div>
-                            <Button variant={viewAngle === 'front' ? 'secondary' : 'ghost'} onClick={() => setViewAngle('front')} className={`rounded-xl font-bold ${viewAngle === 'front' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>앞면</Button>
-                            <Button variant={viewAngle === 'spine' ? 'secondary' : 'ghost'} onClick={() => setViewAngle('spine')} className={`rounded-xl font-bold ${viewAngle === 'spine' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>책등</Button>
-                            <Button variant={viewAngle === 'back' ? 'secondary' : 'ghost'} onClick={() => setViewAngle('back')} className={`rounded-xl font-bold ${viewAngle === 'back' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>뒷면</Button>
+                            <div className="w-px bg-slate-200 my-1.5 mx-0.5"></div>
+                            <Button variant={viewAngle === 'front' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewAngle('front')} className={`rounded-xl font-bold px-2 sm:px-3 text-xs sm:text-sm ${viewAngle === 'front' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>앞면</Button>
+                            <Button variant={viewAngle === 'spine' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewAngle('spine')} className={`rounded-xl font-bold px-2 sm:px-3 text-xs sm:text-sm ${viewAngle === 'spine' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>책등</Button>
+                            <Button variant={viewAngle === 'back' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewAngle('back')} className={`rounded-xl font-bold px-2 sm:px-3 text-xs sm:text-sm ${viewAngle === 'back' ? 'bg-emerald-100 text-emerald-900' : 'text-slate-600'}`}>뒷면</Button>
                         </div>
-                        <div className="hidden lg:flex bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-white/50 items-center gap-1">
-                            <button onClick={() => setZoomLevel(z => Math.max(+(z - 0.1).toFixed(1), 0.5))} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors font-bold text-lg">
+                        <div className="hidden sm:flex bg-white/90 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl shadow-xl border border-white/50 items-center gap-1">
+                            <button onClick={() => setZoomLevel(z => Math.max(+(z - 0.1).toFixed(1), 0.5))} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
                                 <ZoomOut className="h-4 w-4" />
                             </button>
-                            <span className="text-xs font-bold text-slate-500 tabular-nums w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
-                            <button onClick={() => setZoomLevel(z => Math.min(+(z + 0.1).toFixed(1), 1.5))} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors font-bold text-lg">
+                            <span className="text-xs font-bold text-slate-500 tabular-nums w-9 text-center">{Math.round(zoomLevel * 100)}%</span>
+                            <button onClick={() => setZoomLevel(z => Math.min(+(z + 0.1).toFixed(1), 1.5))} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
                                 <ZoomIn className="h-4 w-4" />
                             </button>
                         </div>

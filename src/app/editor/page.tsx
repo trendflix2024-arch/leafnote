@@ -1018,11 +1018,11 @@ function EditorContent() {
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                     <div className="flex gap-1.5 shrink-0">
-                        <Button variant="ghost" size="sm" onClick={() => setShowFindReplace(v => !v)} title="찾기/바꾸기" className="rounded-xl px-2 h-8 md:h-9">
+                        <Button variant="ghost" size="sm" onClick={() => setShowFindReplace(v => !v)} title="찾기/바꾸기" className="rounded-xl px-2 h-9">
                             <Search className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="rounded-xl px-2 md:px-3 font-bold text-[10px] md:text-xs h-8 md:h-9" onClick={() => router.push('/interview')}>인터뷰 추가</Button>
-                        <Button size="sm" onClick={() => router.push('/design')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 md:px-4 font-bold shadow-lg shadow-emerald-100 text-[10px] md:text-xs h-8 md:h-9">
+                        <Button variant="outline" size="sm" className="rounded-xl px-2 md:px-3 font-bold text-xs h-9" onClick={() => router.push('/interview')}>인터뷰 추가</Button>
+                        <Button size="sm" onClick={() => router.push('/design')} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 md:px-4 font-bold shadow-lg shadow-emerald-100 text-xs h-9">
                             다음 단계 <ArrowRight className="ml-1 h-3 w-3 md:h-4 md:w-4" />
                         </Button>
                     </div>
@@ -1031,25 +1031,33 @@ function EditorContent() {
 
             {/* 찾기/바꾸기 바 */}
             {showFindReplace && (
-                <div className="bg-white border-b px-6 py-3 flex items-center gap-3 shadow-sm z-20">
+                <div className="bg-white border-b px-4 py-3 flex flex-wrap items-center gap-2 shadow-sm z-20">
                     <input
                         value={findText}
                         onChange={e => { setFindText(e.target.value); calcMatchCount(e.target.value); }}
                         placeholder="찾기..."
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[100px] focus:outline-none focus:ring-1 focus:ring-emerald-300"
                     />
-                    <span className="text-xs text-slate-400 shrink-0">{matchCount}개 발견</span>
+                    <span className="text-xs text-slate-400 shrink-0">{matchCount}개</span>
                     <input
                         value={replaceText}
                         onChange={e => setReplaceText(e.target.value)}
                         placeholder="바꾸기..."
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm flex-1 min-w-[100px] focus:outline-none focus:ring-1 focus:ring-emerald-300"
                     />
-                    <Button size="sm" onClick={handleReplaceAll} disabled={!findText} className="rounded-lg text-xs">모두 바꾸기</Button>
-                    <button onClick={() => setShowFindReplace(false)} className="ml-auto text-slate-400 hover:text-slate-600">
+                    <Button size="sm" onClick={handleReplaceAll} disabled={!findText} className="shrink-0 rounded-lg text-xs">모두 바꾸기</Button>
+                    <button onClick={() => setShowFindReplace(false)} className="shrink-0 text-slate-400 hover:text-slate-600">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
+            )}
+
+            {/* 모바일 사이드바 backdrop */}
+            {showMobileSidebar && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                    onClick={() => setShowMobileSidebar(false)}
+                />
             )}
 
             <main className="flex-1 w-full flex overflow-hidden">
@@ -1061,8 +1069,15 @@ function EditorContent() {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    className={`lg:col-span-4 space-y-6 order-2 lg:order-1 ${showMobileSidebar ? 'block' : 'hidden'} lg:block`}
+                                    className={`lg:col-span-4 space-y-6 order-2 lg:order-1 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0 ${showMobileSidebar ? 'fixed inset-0 z-50 bg-white overflow-y-auto p-4 pb-20' : 'hidden'} lg:block`}
                                 >
+                                    {/* 모바일 사이드바 헤더 */}
+                                    <div className="flex justify-between items-center mb-2 lg:hidden">
+                                        <h2 className="font-bold text-slate-800">편집 설정</h2>
+                                        <button onClick={() => setShowMobileSidebar(false)} className="p-1 rounded-lg hover:bg-slate-100">
+                                            <X className="h-5 w-5 text-slate-500" />
+                                        </button>
+                                    </div>
                                     {/* 판형 선택 */}
                                     <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-5 shadow-xl shadow-slate-200/50 border border-slate-100 space-y-3">
                                         <div className="flex items-center gap-2 px-2">
@@ -1272,7 +1287,7 @@ function EditorContent() {
                                             <h3 className="font-bold text-lg text-slate-800 px-2">목차</h3>
                                             <div className="h-1 w-8 bg-emerald-500 rounded-full mx-2" />
                                         </div>
-                                        <div className="space-y-2 max-h-[30vh] lg:max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar focus-visible:outline-none">
+                                        <div className="space-y-2 max-h-[40vh] lg:max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar focus-visible:outline-none">
                                             {chapters.map((ch, i) => (
                                                 <button
                                                     key={ch.id}
@@ -1578,7 +1593,7 @@ function EditorContent() {
             {/* Mobile FAB — 사이드바 토글 */}
             {!isFocusMode && (
                 <button
-                    className="fixed bottom-6 right-4 z-40 lg:hidden bg-emerald-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl shadow-emerald-900/30 transition-transform active:scale-95"
+                    className="fixed bottom-8 right-4 z-40 lg:hidden bg-emerald-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl shadow-emerald-900/30 transition-transform active:scale-95"
                     onClick={() => setShowMobileSidebar(v => !v)}
                     aria-label="에코 패널 열기"
                 >
