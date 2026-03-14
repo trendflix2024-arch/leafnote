@@ -142,7 +142,7 @@ export const MyBookPDF = ({
         },
     });
 
-    const chapters = project.fullDraft.split('---').filter(Boolean);
+    const chapters = (project.fullDraft || '').split('---').filter(Boolean);
 
     return (
         <Document>

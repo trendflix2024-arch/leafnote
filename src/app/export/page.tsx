@@ -71,6 +71,8 @@ function ExportContent() {
     const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [actionError, setActionError] = useState<string | null>(null);
+    const [epubSuccess, setEpubSuccess] = useState(false);
 
     const { setDedicationText, setAuthorBio } = useBookStore();
     const { tier } = useSubscription();
@@ -191,6 +193,8 @@ function ExportContent() {
 
     const handleEpubDownload = async () => {
         setIsEpubLoading(true);
+        setActionError(null);
+        setEpubSuccess(false);
         try {
             const sections = (fullDraft || '').split(/\n\n+/).filter(Boolean);
             const chapters = sections.length > 0
@@ -207,6 +211,8 @@ function ExportContent() {
                 }),
             });
 
+            if (!response.ok) throw new Error(`EPUB 생성 실패 (${response.status})`);
+
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -214,8 +220,11 @@ function ExportContent() {
             a.download = `${projectTitle}.epub`;
             a.click();
             URL.revokeObjectURL(url);
+            setEpubSuccess(true);
+            setTimeout(() => setEpubSuccess(false), 3000);
         } catch (error) {
             console.error('EPUB download failed:', error);
+            setActionError('EPUB 다운로드에 실패했습니다. 잠시 후 다시 시도하세요.');
         } finally {
             setIsEpubLoading(false);
         }
@@ -252,6 +261,7 @@ function ExportContent() {
 
     const handleCommunityPublish = async () => {
         setIsPublishing(true);
+        setActionError(null);
         try {
             const excerptContent = publishExcerpt === 'full'
                 ? fullDraft
@@ -269,12 +279,15 @@ function ExportContent() {
                     projectId: currentProject.id,
                 }),
             });
-            if (res.ok) {
-                const data = await res.json();
-                setPublishedUrl(`/community/${data.id}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error((err as any).error || `발행 실패 (${res.status})`);
             }
+            const data = await res.json();
+            setPublishedUrl(`/community/${data.id}`);
         } catch (e) {
             console.error('Community publish failed:', e);
+            setActionError('이야기 숲 발행에 실패했습니다. 잠시 후 다시 시도하세요.');
         } finally {
             setIsPublishing(false);
         }
@@ -330,6 +343,7 @@ function ExportContent() {
             link.click();
         } catch (e) {
             console.error('Cover image download failed:', e);
+            setActionError('표지 이미지 다운로드에 실패했습니다.');
         } finally {
             setIsCoverDownloading(false);
         }
@@ -490,7 +504,7 @@ function ExportContent() {
             case 'preface': return renderPreface();
             case 'dedication': return renderDedication();
             case 'toc': return renderTOC();
-            case 'content': return renderContentPage(contentPages, entry.contentIndex!);
+            case 'content': return renderContentPage(contentPages, entry.contentIndex ?? 0);
             case 'authorbio': return renderAuthorBio();
             default: return renderBackCover();
         }
@@ -618,6 +632,20 @@ function ExportContent() {
 
                     <div className="space-y-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto lg:pr-1 custom-scrollbar">
 
+                        {/* 에러/성공 인라인 배너 */}
+                        {actionError && (
+                            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                                <span className="shrink-0">⚠️</span>
+                                <span className="flex-1">{actionError}</span>
+                                <button onClick={() => setActionError(null)} className="shrink-0 text-red-400 hover:text-red-600">✕</button>
+                            </div>
+                        )}
+                        {epubSuccess && (
+                            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-700">
+                                <Check className="h-4 w-4 shrink-0" /> EPUB 다운로드 완료!
+                            </div>
+                        )}
+
                         {/* 0. 책 세부 정보 (헌정사 / 저자 소개) */}
                         <Card className="p-5 bg-white shadow-lg border-none">
                             <h3 className="font-bold text-sm mb-3 text-slate-800 flex items-center gap-2">
@@ -654,6 +682,12 @@ function ExportContent() {
                         </Card>
 
                         {/* 1. 내 책 정보 */}
+                        {!fullDraft && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2">
+                                <span>⚠️</span>
+                                <span>원고가 없습니다. 편집 페이지에서 먼저 원고를 작성하세요.</span>
+                            </div>
+                        )}
                         <Card className="p-5 bg-white shadow-lg border-none">
                             <h3 className="font-bold text-sm mb-3 text-slate-800 flex items-center gap-2">
                                 <BookOpen className="text-emerald-600 h-4 w-4" /> 내 책 정보
