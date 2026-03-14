@@ -143,7 +143,7 @@ type FabricCoverProps = {
     title: string; frontSubtitle: string; author: string;
     titleStyle: TypographyStyle; subtitleStyle: TypographyStyle; authorStyle: TypographyStyle;
     selectedFontFamily: string; formatScale: number;
-    bgImageUrl: string | null; bgBrightness: number;
+    bgImageUrl: string | null;
     selectedOrnament: OrnamentKey;
     textGroupPos: { x: number; y: number } | null;
     textShadow: boolean; textAlign: 'left' | 'center' | 'right'; textPosition: 'top' | 'center' | 'bottom';
@@ -154,7 +154,7 @@ type FabricCoverProps = {
 function FabricCoverCanvas({
     canvasW, canvasH, primaryColor, resolvedTextColor, resolvedAccentColor,
     title, frontSubtitle, author, titleStyle, subtitleStyle, authorStyle,
-    selectedFontFamily, formatScale, bgImageUrl, bgBrightness, selectedOrnament,
+    selectedFontFamily, formatScale, bgImageUrl, selectedOrnament,
     textGroupPos, textShadow, textAlign, textPosition, onPosChange, onExportReady,
 }: FabricCoverProps) {
     const elRef = useRef<HTMLCanvasElement>(null);
@@ -208,8 +208,6 @@ function FabricCoverCanvas({
                     originX: 'center', originY: 'center', selectable: false, evented: false,
                 } as any);
                 fc.add(fimg);
-                const alpha = (100 - bgBrightness) / 100 * 0.65;
-                if (alpha > 0.01) fc.add(new Rect({ left: 0, top: 0, width: canvasW, height: canvasH, fill: `rgba(0,0,0,${alpha.toFixed(2)})`, selectable: false, evented: false }));
             }
 
             // Ornaments
@@ -318,7 +316,7 @@ function FabricCoverCanvas({
         titleStyle.size, titleStyle.weight, titleStyle.spacing, titleStyle.lineHeight, titleStyle.italic, titleStyle.transform,
         subtitleStyle.size, subtitleStyle.weight, subtitleStyle.spacing, subtitleStyle.lineHeight, subtitleStyle.italic, subtitleStyle.transform,
         authorStyle.size, authorStyle.weight, authorStyle.spacing, authorStyle.lineHeight, authorStyle.italic, authorStyle.transform,
-        selectedFontFamily, formatScale, bgImageUrl, bgBrightness, selectedOrnament,
+        selectedFontFamily, formatScale, bgImageUrl, selectedOrnament,
         textGroupPos?.x, textGroupPos?.y,
         textShadow, textAlign, textPosition,
     ]);
@@ -1193,7 +1191,6 @@ export default function DesignPage() {
                                                 selectedFontFamily={selectedFontFamily}
                                                 formatScale={formatScale}
                                                 bgImageUrl={bgImageUrl}
-                                                bgBrightness={bgBrightness}
                                                 selectedOrnament={selectedOrnament}
                                                 textGroupPos={textGroupPos}
                                                 textShadow={textShadow}
@@ -1203,6 +1200,13 @@ export default function DesignPage() {
                                                 onExportReady={(fn) => { exportFnRef.current = fn; }}
                                             />
                                         </div>
+                                        {/* CSS brightness overlay — canvas 재빌드 없이 즉시 반영 */}
+                                        {bgImageUrl && ((100 - bgBrightness) / 100 * 0.65) > 0.01 && (
+                                            <div
+                                                className="absolute inset-0 pointer-events-none"
+                                                style={{ backgroundColor: `rgba(0,0,0,${((100 - bgBrightness) / 100 * 0.65).toFixed(2)})`, zIndex: 1 }}
+                                            />
+                                        )}
                                     </div>
                                 )}
 
@@ -1247,7 +1251,7 @@ export default function DesignPage() {
                                         background: bgImageUrl ? `url(${bgImageUrl}) center/cover no-repeat` : colors.primary,
                                     }}
                                 >
-                                    {bgImageUrl && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${(100 - bgBrightness) / 100})` }}></div>}
+                                    {bgImageUrl && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${((100 - bgBrightness) / 100 * 0.65).toFixed(2)})` }}></div>}
                                     <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: textureUrl }}></div>
                                     <div className="relative z-10 text-center flex flex-col items-center justify-between h-full py-6">
                                         <Sparkles className="mx-auto mb-6 opacity-60" style={{ color: resolvedAccentColor, width: 24, height: 24 }} />
