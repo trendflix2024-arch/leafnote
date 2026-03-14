@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useBookStore, useCurrentProject, Project, InteriorLayout, DEFAULT_INTERIOR } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ const PDFDownloadSection = dynamic<{ project: Project }>(
     }
 );
 
-export default function ExportPage() {
+function ExportContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const currentProject = useCurrentProject();
@@ -913,5 +913,17 @@ export default function ExportPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function ExportPage() {
+    return (
+        <React.Suspense fallback={
+            <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center">
+                <div className="animate-pulse text-slate-400 font-serif">로딩 중...</div>
+            </div>
+        }>
+            <ExportContent />
+        </React.Suspense>
     );
 }

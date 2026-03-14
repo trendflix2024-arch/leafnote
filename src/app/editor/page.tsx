@@ -1378,18 +1378,11 @@ function EditorContent() {
             <main className="flex-1 w-full flex overflow-hidden">
                 <div className={`flex-1 max-w-7xl mx-auto w-full p-4 lg:p-12 transition-all duration-500 ${isFocusMode ? 'max-w-4xl' : ''}`}>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 h-full">
-                        <AnimatePresence>
-                            {!isFocusMode && (
-                                <motion.aside
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="hidden lg:block lg:col-span-4 space-y-6 order-2 lg:order-1"
-                                >
-                                    {renderSidebarContent()}
-                                </motion.aside>
-                            )}
-                        </AnimatePresence>
+                        {!isFocusMode && (
+                            <aside className="hidden lg:block lg:col-span-4 space-y-6 order-2 lg:order-1 transition-all duration-300">
+                                {renderSidebarContent()}
+                            </aside>
+                        )}
 
                         <section className={`${isFocusMode ? 'lg:col-span-12' : 'lg:col-span-8'} order-1 lg:order-2`}>
                             {/* 편집 / 미리보기 탭 */}

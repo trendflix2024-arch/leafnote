@@ -1215,8 +1215,8 @@ export default function DesignPage() {
                 <div className="flex-1 min-h-[400px] sm:min-h-[500px] lg:h-[calc(100vh-140px)] bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 rounded-3xl relative overflow-hidden flex flex-col items-center border border-slate-200 shadow-inner">
 
                     {/* 2D Book Preview */}
-                    <div className="flex-1 w-full flex items-center justify-center overflow-auto p-4">
-                        <div className="transition-transform duration-300 origin-center" style={{ transform: `scale(${zoomLevel})` }}>
+                    <div className="flex-1 w-full flex items-center overflow-auto p-4">
+                        <div className="mx-auto transition-transform duration-300 origin-center" style={{ transform: `scale(${zoomLevel})` }}>
                             <div className="flex items-stretch gap-0 shadow-2xl overflow-hidden transition-all duration-500">
                                 {/* 2D FRONT — Fabric.js Canvas */}
                                 {(viewAngle === '2d' || viewAngle === 'front') && (
