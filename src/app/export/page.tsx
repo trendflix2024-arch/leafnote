@@ -336,8 +336,8 @@ export default function ExportPage() {
     }, [coverPreviewRef, projectTitle]);
 
     const renderCover = () => (
-        <div className="w-full h-full relative overflow-hidden">
-            <div className="w-full h-full relative" style={{ background: `linear-gradient(135deg, ${cdColors.primary}, ${cdColors.secondary})` }}>
+        <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${cdColors.primary}, ${cdColors.secondary})` }}>
                 {showBgImage && <div className="absolute inset-0" style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
                 {coverOverlay > 0 && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${coverOverlay / 100})` }} />}
                 <div className={`absolute inset-0 p-6 flex flex-col z-10 ${
@@ -389,7 +389,7 @@ export default function ExportPage() {
     );
 
     const renderPreface = () => (
-        <div className="w-full h-full flex flex-col overflow-hidden"
+        <div className="absolute inset-0 flex flex-col overflow-hidden"
             style={{ padding: `${il.marginTop * 0.35}% ${il.marginOuter * 0.35}% ${il.marginBottom * 0.35}% ${il.marginInner * 0.35}%` }}
         >
             <h4 className="font-bold text-slate-800 mb-3 border-b pb-2 shrink-0"
@@ -405,7 +405,7 @@ export default function ExportPage() {
     );
 
     const renderBackCover = () => (
-        <div className="w-full h-full bg-slate-800 flex items-center justify-center p-12 text-center text-white/50">
+        <div className="absolute inset-0 bg-slate-800 flex items-center justify-center p-12 text-center text-white/50">
             <div>
                 <BookOpen size={32} className="mx-auto mb-4" />
                 <p className="text-xs tracking-widest uppercase">Published by LeafNote</p>
@@ -414,7 +414,7 @@ export default function ExportPage() {
     );
 
     const renderContentPage = (contentPages: string[], pageIndex: number) => (
-        <div className="w-full h-full flex flex-col overflow-hidden"
+        <div className="absolute inset-0 flex flex-col overflow-hidden"
             style={{ padding: `${il.marginTop * 0.35}% ${il.marginOuter * 0.35}% ${il.marginBottom * 0.35}% ${il.marginInner * 0.35}%` }}
         >
             <p className="whitespace-pre-wrap text-justify overflow-hidden flex-1"
@@ -435,7 +435,7 @@ export default function ExportPage() {
     );
 
     const renderTOC = () => (
-        <div className="w-full h-full flex flex-col overflow-hidden"
+        <div className="absolute inset-0 flex flex-col overflow-hidden"
             style={{ padding: `${il.marginTop * 0.35}% ${il.marginOuter * 0.35}% ${il.marginBottom * 0.35}% ${il.marginInner * 0.35}%` }}
         >
             <h4 className="font-bold text-slate-800 mb-2 shrink-0"
@@ -456,7 +456,7 @@ export default function ExportPage() {
     );
 
     const renderDedication = () => (
-        <div className="w-full h-full flex items-center justify-center p-10 text-center">
+        <div className="absolute inset-0 flex items-center justify-center p-10 text-center">
             <p className="text-slate-600 italic leading-relaxed"
                 style={{ fontFamily: `'${il.font}', serif`, fontSize: `${il.fontSize * 1.333 * 0.9}px`, lineHeight: `${il.lineHeight}%` }}
             >
@@ -466,7 +466,7 @@ export default function ExportPage() {
     );
 
     const renderAuthorBio = () => (
-        <div className="w-full h-full flex flex-col overflow-hidden"
+        <div className="absolute inset-0 flex flex-col overflow-hidden"
             style={{ padding: `${il.marginTop * 0.35}% ${il.marginOuter * 0.35}% ${il.marginBottom * 0.35}% ${il.marginInner * 0.35}%` }}
         >
             <h4 className="font-bold text-slate-800 mb-2 shrink-0"
@@ -536,11 +536,11 @@ export default function ExportPage() {
                         {viewMode === 'print' ? (
                             /* ===== 종이책 (Print) — 판형 비율 단일 페이지 ===== */
                             <div className="flex-1 flex flex-col items-center justify-center">
-                                <div className="w-full max-w-xs mx-auto relative" style={{ aspectRatio: `${bookFormat.w} / ${bookFormat.h}` }}>
+                                <div className="w-full max-w-sm mx-auto relative" style={{ aspectRatio: `${bookFormat.w} / ${bookFormat.h}` }}>
                                     {/* Paper shadow effect */}
-                                    <div className="absolute -right-1 top-1 bottom-0 w-full bg-slate-300/40 rounded-sm" />
-                                    <div className="absolute -right-0.5 top-0.5 bottom-0 w-full bg-slate-200/60 rounded-sm" />
-                                    <div ref={coverPreviewRef} className="w-full h-full bg-white rounded-sm shadow-xl overflow-hidden relative border border-slate-200/80">
+                                    <div className="absolute -right-1 top-1 inset-0 bg-slate-300/40 rounded-sm" />
+                                    <div className="absolute -right-0.5 top-0.5 inset-0 bg-slate-200/60 rounded-sm" />
+                                    <div ref={coverPreviewRef} className="absolute inset-0 bg-white rounded-sm shadow-xl overflow-hidden border border-slate-200/80">
                                         <AnimatePresence mode="wait" initial={false}>
                                             <motion.div
                                                 key={`print-${currentPage}`}
@@ -548,7 +548,7 @@ export default function ExportPage() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0, x: -20 }}
                                                 transition={{ duration: 0.25, ease: "easeInOut" }}
-                                                className="w-full h-full flex flex-col overflow-hidden"
+                                                className="absolute inset-0 flex flex-col overflow-hidden"
                                             >
                                                 {renderPage(printPages)}
                                             </motion.div>
@@ -560,9 +560,9 @@ export default function ExportPage() {
                         ) : (
                             /* ===== 전자책 (E-book) — 단일 페이지 세로 뷰 ===== */
                             <div className="flex-1 flex flex-col items-center justify-center">
-                                <div className="w-full max-w-xs mx-auto relative" style={{ aspectRatio: '3 / 4' }}>
+                                <div className="w-full max-w-sm mx-auto relative" style={{ aspectRatio: '3 / 4' }}>
                                     {/* Device frame */}
-                                    <div className="w-full h-full rounded-2xl border-[3px] border-slate-300 bg-white shadow-2xl overflow-hidden relative">
+                                    <div className="absolute inset-0 rounded-2xl border-[3px] border-slate-300 bg-white shadow-2xl overflow-hidden">
                                         <AnimatePresence mode="wait" initial={false}>
                                             <motion.div
                                                 key={`ebook-${currentPage}`}
@@ -570,7 +570,7 @@ export default function ExportPage() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0, x: -20 }}
                                                 transition={{ duration: 0.25, ease: "easeInOut" }}
-                                                className="w-full h-full flex flex-col overflow-hidden"
+                                                className="absolute inset-0 flex flex-col overflow-hidden"
                                             >
                                                 {renderPage(ebookPages)}
                                             </motion.div>

@@ -254,9 +254,9 @@ function FabricCoverCanvas({
                 fill: resolvedTextColor, textAlign: ta,
                 charSpacing: titleStyle.spacing * 10, lineHeight: titleStyle.lineHeight / 100,
                 fontStyle: titleStyle.italic ? 'italic' : 'normal', shadow: shad,
-                selectable: true, hasControls: false, hasBorders: true,
+                selectable: true, hasControls: false, hasBorders: false,
                 lockScalingX: true, lockScalingY: true, lockRotation: true,
-                borderColor: 'rgba(255,255,255,0.5)', padding: 4,
+                padding: 4,
             } as any);
 
             // Estimate title block height for stacking below
