@@ -437,6 +437,34 @@ export default function DesignPage() {
         if (status === 'authenticated' && !currentProject) router.push('/dashboard');
     }, [currentProject, status, router]);
 
+    // ── Hooks must be declared before any conditional returns ──────────────────
+    const captureSnapshot = useCallback((): DesignSnapshot => ({
+        designParams, selectedFont, textPosition, textAlign,
+        titleStyle, subtitleStyle, authorStyle,
+        bgBrightness, textShadow, customTextColor, customAccentColor,
+        textGroupPos, selectedOrnament, bgImageUrl,
+    }), [designParams, selectedFont, textPosition, textAlign, titleStyle, subtitleStyle, authorStyle, bgBrightness, textShadow, customTextColor, customAccentColor, textGroupPos, selectedOrnament, bgImageUrl]);
+
+    const pushDesignHistory = useCallback(() => {
+        const snap = captureSnapshot();
+        setDesignHistory(prev => {
+            const trimmed = prev.slice(0, designHistoryIndex + 1);
+            return [...trimmed, snap].slice(-30);
+        });
+        setDesignHistoryIndex(prev => Math.min(prev + 1, 29));
+    }, [captureSnapshot, designHistoryIndex]);
+
+    const handleExportCover = useCallback(() => {
+        if (!exportFnRef.current) { alert('캔버스가 아직 준비되지 않았습니다.'); return; }
+        const dataUrl = exportFnRef.current();
+        const link = document.createElement('a');
+        link.download = `${currentProject?.title || '표지'}-cover.png`;
+        link.href = dataUrl;
+        link.click();
+        setCoverImageUrl(dataUrl);
+    }, [currentProject?.title, setCoverImageUrl]);
+    // ────────────────────────────────────────────────────────────────────────────
+
     if (status === 'loading' || !session || !currentProject) {
         return (
             <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center">
@@ -609,32 +637,6 @@ export default function DesignPage() {
         saveCoverState();
         router.push('/export');
     };
-
-    const handleExportCover = useCallback(() => {
-        if (!exportFnRef.current) { alert('캔버스가 아직 준비되지 않았습니다.'); return; }
-        const dataUrl = exportFnRef.current();
-        const link = document.createElement('a');
-        link.download = `${currentProject?.title || '표지'}-cover.png`;
-        link.href = dataUrl;
-        link.click();
-        setCoverImageUrl(dataUrl);
-    }, [currentProject?.title, setCoverImageUrl]);
-
-    const captureSnapshot = useCallback((): DesignSnapshot => ({
-        designParams, selectedFont, textPosition, textAlign,
-        titleStyle, subtitleStyle, authorStyle,
-        bgBrightness, textShadow, customTextColor, customAccentColor,
-        textGroupPos, selectedOrnament, bgImageUrl,
-    }), [designParams, selectedFont, textPosition, textAlign, titleStyle, subtitleStyle, authorStyle, bgBrightness, textShadow, customTextColor, customAccentColor, textGroupPos, selectedOrnament, bgImageUrl]);
-
-    const pushDesignHistory = useCallback(() => {
-        const snap = captureSnapshot();
-        setDesignHistory(prev => {
-            const trimmed = prev.slice(0, designHistoryIndex + 1);
-            return [...trimmed, snap].slice(-30);
-        });
-        setDesignHistoryIndex(prev => Math.min(prev + 1, 29));
-    }, [captureSnapshot, designHistoryIndex]);
 
     const applySnapshot = (snap: DesignSnapshot) => {
         setDesignParams(snap.designParams);
