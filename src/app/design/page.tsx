@@ -588,6 +588,10 @@ export default function DesignPage() {
     const panelH = baseH;
     const spineW = Math.round(panelW * 0.13);
     const formatScale = format.h / 225; // text scale relative to 신국판
+    // 뷰별 텍스트 비율 일관성 보정 — 전체 뷰 비율을 기준으로 각 뷰에서 동일 비율 유지
+    const canvasTextScale = formatScale * (panelH / 400);                              // Fabric.js 캔버스용 (CSS scale이 추가로 1.35x 적용됨)
+    const htmlDivH = viewAngle === '2d' ? panelH : Math.round(panelH * 1.35);
+    const htmlTextScale = formatScale * (htmlDivH / 400);                              // HTML 요소용 (뒷면/책등 div)
 
     // Editable display values
     const displayTitle = editTexts.title || currentProject.title;
@@ -1190,7 +1194,7 @@ export default function DesignPage() {
                                                 subtitleStyle={subtitleStyle}
                                                 authorStyle={authorStyle}
                                                 selectedFontFamily={selectedFontFamily}
-                                                formatScale={formatScale}
+                                                formatScale={canvasTextScale}
                                                 bgImageUrl={bgImageUrl}
                                                 selectedOrnament={selectedOrnament}
                                                 textGroupPos={textGroupPos}
@@ -1229,7 +1233,7 @@ export default function DesignPage() {
                                         <span className="drop-shadow-sm whitespace-nowrap" style={{
                                             fontFamily: selectedFontFamily,
                                             color: colors.textSpine,
-                                            fontSize: `${Math.max(10, Math.round(spineTitleStyle.size * formatScale))}px`,
+                                            fontSize: `${Math.max(10, Math.round(spineTitleStyle.size * htmlTextScale))}px`,
                                             fontWeight: spineTitleStyle.weight,
                                             letterSpacing: `${spineTitleStyle.spacing / 100}em`,
                                             fontStyle: spineTitleStyle.italic ? 'italic' : 'normal',
@@ -1259,7 +1263,7 @@ export default function DesignPage() {
                                         <p className="break-keep" style={{
                                             fontFamily: selectedFontFamily,
                                             color: resolvedTextColor,
-                                            fontSize: `${Math.round(backBlurbStyle.size * formatScale)}px`,
+                                            fontSize: `${Math.round(backBlurbStyle.size * htmlTextScale)}px`,
                                             fontWeight: backBlurbStyle.weight,
                                             letterSpacing: `${backBlurbStyle.spacing / 100}em`,
                                             lineHeight: `${backBlurbStyle.lineHeight}%`,
