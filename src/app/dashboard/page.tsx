@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users, Tag, MessageSquare, BarChart2 } from 'lucide-react';
+import { BookOpen, Plus, MoreHorizontal, FileText, Edit3, Trash2, UserCircle, Settings, LogOut, Check, Palette, Type, Image, RotateCcw, RefreshCw, Sparkles, Loader2, MessageCircle, TreePine, Crown, Sprout, Leaf, Users, Tag, MessageSquare, BarChart2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { InstallBanner } from '@/components/InstallBanner';
@@ -263,7 +263,9 @@ export default function DashboardPage() {
     const handleProjectClick = (id: string) => {
         if (isEditingTitle === id || isChangingTheme === id) return;
         switchProject(id);
-        router.push('/interview');
+        const project = projects.find(p => p.id === id);
+        const isComplete = project ? calculateProgress(project) >= 100 : false;
+        router.push(isComplete ? '/editor' : '/interview');
     };
 
     const activeProjects = projects.filter(p => !p.isDeleted);
@@ -299,6 +301,8 @@ export default function DashboardPage() {
 
         return Math.min(progress, 100);
     };
+
+    const completedCount = activeProjects.filter(p => calculateProgress(p) >= 100).length;
 
     const handleLogout = async () => {
         resetAll();
@@ -433,25 +437,25 @@ export default function DashboardPage() {
                 <SubscriptionBanner />
 
                 {/* Stats - Reformatted for Seniors (3 Cards) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-8 sm:mb-12">
                     {[
-                        { label: '기록된 잎사귀 (작성한 이야기)', value: totalWords.toLocaleString(), icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-                        { label: '자라나는 나무 (진행 중인 이야기)', value: activeProjects.length.toString(), icon: TreePine, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-                        { label: '완성된 숲 (출판된 책)', value: '0', icon: Crown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+                        { label: '누적 글자 수', value: totalWords.toLocaleString(), unit: '자', icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+                        { label: '진행 중인 이야기', value: activeProjects.length.toString(), unit: '개', icon: TreePine, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+                        { label: '완성된 이야기', value: completedCount.toString(), unit: '개', icon: Crown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
                     ].map((stat, i) => (
                         <motion.div
                             key={stat.label}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-sm border border-slate-100/80 hover:shadow-md transition-all group flex items-center gap-6"
+                            className="bg-white rounded-[1.5rem] p-3 sm:p-6 md:p-8 shadow-sm border border-slate-100/80 hover:shadow-md transition-all group flex items-center gap-2 sm:gap-4 md:gap-6"
                         >
-                            <div className={`${stat.bgColor} w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                <stat.icon size={28} className={`${stat.color}`} />
+                            <div className={`${stat.bgColor} w-9 h-9 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
+                                <stat.icon size={18} className={`${stat.color} sm:w-6 sm:h-6`} />
                             </div>
-                            <div>
-                                <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{stat.value}<span className="text-sm ml-1 text-slate-400 font-normal">{stat.label.includes('잎사귀') ? '자' : stat.label.includes('나무') ? '그루' : '권'}</span></p>
+                            <div className="min-w-0">
+                                <p className="text-[8px] sm:text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1 truncate">{stat.label}</p>
+                                <p className="text-base sm:text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{stat.value}<span className="text-[10px] sm:text-sm ml-0.5 sm:ml-1 text-slate-400 font-normal">{stat.unit}</span></p>
                             </div>
                         </motion.div>
                     ))}
@@ -794,9 +798,13 @@ export default function DashboardPage() {
                                                             <span className="text-sm sm:text-base font-bold text-slate-800">{project.interviewData.length}회</span>
                                                         </div>
                                                     </div>
-                                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white group-hover:rotate-[360deg] transition-all duration-500 shadow-sm">
-                                                        <Edit3 size={18} className="transition-colors" />
-                                                    </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleProjectClick(project.id); }}
+                                                        className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition-all active:scale-95"
+                                                    >
+                                                        {project.interviewData.length === 0 ? '시작하기' : '이어서 쓰기'}
+                                                        <ChevronRight size={12} />
+                                                    </button>
                                                 </div>
                                             )}
                                         </>
