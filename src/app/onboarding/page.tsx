@@ -106,7 +106,10 @@ export default function OnboardingPage() {
 
     const canProceed = () => {
         if (step === 0) return name.trim().length > 0;
-        if (step === 1) return selectedTopic !== '';
+        if (step === 1) {
+            if (selectedTopic === 'custom') return customTopic.trim().length > 0;
+            return selectedTopic !== '';
+        }
         if (step === 2) return selectedTone !== '';
         return true;
     };
@@ -332,7 +335,7 @@ export default function OnboardingPage() {
                 </AnimatePresence>
 
                 {/* Navigation sticky bottom bar for mobile */}
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#FAF9F6]/80 backdrop-blur-md border-t border-paper-edge md:border-none md:relative md:bg-transparent md:p-0 md:mt-16 md:max-w-xl md:mx-auto z-50">
+                <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[#FAF9F6]/80 backdrop-blur-md border-t border-paper-edge md:border-none md:relative md:bg-transparent md:p-0 md:mt-16 md:max-w-xl md:mx-auto z-50">
                     <div className="flex justify-between items-center max-w-xl mx-auto w-full gap-4">
                         <Button
                             variant="ghost"

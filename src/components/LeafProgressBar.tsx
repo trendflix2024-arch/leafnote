@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeafProgressBarProps {
     progress: number; // 0 to 100
@@ -51,5 +51,3 @@ export default function LeafProgressBar({ progress }: LeafProgressBarProps) {
         </div>
     );
 }
-
-import { AnimatePresence } from 'framer-motion';

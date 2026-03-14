@@ -180,6 +180,7 @@ export default function CommunityPage() {
         ));
         try {
             const res = await fetch(`/api/community/posts/${postId}/like`, { method: "POST" });
+            if (!res.ok) throw new Error(`like failed (${res.status})`);
             const data = await res.json();
             setPosts((prev) => prev.map((p) =>
                 p.id === postId ? { ...p, isLiked: data.liked, like_count: data.likeCount } : p

@@ -174,6 +174,9 @@ export default function InterviewPage() {
                 recognitionRef.current = recognition;
             }
         }
+        return () => {
+            recognitionRef.current?.stop();
+        };
     }, []);
 
     const toggleListening = () => {

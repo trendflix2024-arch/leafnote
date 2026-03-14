@@ -429,6 +429,7 @@ function EditorContent() {
     const [lastSavedDraft, setLastSavedDraft] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [rewriteNotice, setRewriteNotice] = useState<string | null>(null);
+    const rewriteNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [generateError, setGenerateError] = useState<string | null>(null);
 
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -823,15 +824,18 @@ function EditorContent() {
                 });
                 setSelectedText('');
                 setRewriteNotice('문장을 다듬었습니다');
-                setTimeout(() => setRewriteNotice(null), 3000);
+                if (rewriteNoticeTimerRef.current) clearTimeout(rewriteNoticeTimerRef.current);
+                rewriteNoticeTimerRef.current = setTimeout(() => setRewriteNotice(null), 3000);
             } else if (data.error) {
                 setRewriteNotice(data.error);
-                setTimeout(() => setRewriteNotice(null), 4000);
+                if (rewriteNoticeTimerRef.current) clearTimeout(rewriteNoticeTimerRef.current);
+                rewriteNoticeTimerRef.current = setTimeout(() => setRewriteNotice(null), 4000);
             }
         } catch (error: any) {
             console.error('Rewrite failed:', error);
             setRewriteNotice('잠시 후 다시 시도해 주세요.');
-            setTimeout(() => setRewriteNotice(null), 4000);
+            if (rewriteNoticeTimerRef.current) clearTimeout(rewriteNoticeTimerRef.current);
+            rewriteNoticeTimerRef.current = setTimeout(() => setRewriteNotice(null), 4000);
         } finally {
             setIsRewriting(false);
             setRewriteMode(null);

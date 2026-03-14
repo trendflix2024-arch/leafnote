@@ -95,4 +95,11 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 9999px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
 
+/* scrollbar-hide utility */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* pb-safe: iPhone home indicator safe area */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
 /* Global transition removed to avoid conflict with framer-motion */
